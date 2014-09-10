@@ -7,8 +7,6 @@ import time
 import pymysql
 import hashlib
 
-# ttt
-
 class EmptyClass:
     pass
 

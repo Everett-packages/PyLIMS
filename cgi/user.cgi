@@ -1,11 +1,10 @@
-#!/usr/bin/python3
+#!C:\Python34\python.exe
 import argparse
 import textwrap
 import sys
 sys.path.append("../lib")
-import LimsCore
 
-# aaa
+import LimsCore
 
 LimsCore.start_cgi_page()
 
