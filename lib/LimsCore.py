@@ -97,16 +97,21 @@ def start_cgi_page(page_title='untitled'):
 
     Data.cgi = cgi.FieldStorage()
 
-    # parse cookies 
-    cookie_handler = {}
+    # parse cookies
+    cookies = []
 
     if 'HTTP_COOKIE' in os.environ:
-        cookies = os.environ['HTTP_COOKIE']
-        cookies = cookies.split('; ')
+        cookies = os.environ['HTTP_COOKIE'].split('; ')
 
         for cookie in cookies:
             cookie = cookie.split('=')
-            cookie_handler[cookie[0]] = cookie[1]
+            Data.cgi[cookie[0]] = cookie[1]
+
+    cookieVariables = ['user_id', 'user_passwd', 'database_name']
+    cookiesToSet = ''
+    for v in cookieVariables:
+        if v in Data.cgi and v not in cookies:
+                cookiesToSet += "Set-Cookie: {0}={1}\n".format(v, Data.cgi[v])
 
     # determine the name of the script calling this module
     m = re.search(r'([^/]+)$', inspect.stack()[1][1], re.M | re.I)
@@ -139,22 +144,22 @@ def start_cgi_page(page_title='untitled'):
 
     # assemble html head so that it can be printed when needed
     html_header = '''Content-type: text/html
-
+    {0}
     <html>
      <head>
-      <title>{0}</title>
-      {1}
+      <title>{1}</title>
       {2}
+      {3}
     </head>
     <body>	
     <table style='border-collapse: collapse;'><tr>
      <td style='padding: 0px'><img src='../img/icons/science2.png' style='height:40px'> &nbsp; </td>
-     <td style='padding: 0px'>&nbsp; LIMS  ({3})</td></tr></table>       
-    '''.format(page_title, js_code, css_code, 'user_id')
+     <td style='padding: 0px'>&nbsp; LIMS  ({4})</td></tr></table>
+    '''.format(cookiesToSet, page_title, js_code, css_code, 'user_id')
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
-    if 'user_id' not in cookie_handler:
+    if 'user_id' not in Data.cgi:
         s = '''<br>
             <table><tr style='vertical-align:top'><td><img src ='../img/icons/small57.png' style='height:30px'></td>
                    <td style='width:15px'></td>
@@ -169,6 +174,10 @@ def start_cgi_page(page_title='untitled'):
                                <tr style='vertical-align:top'>
                                 <td>password</td>
                                 <td><input type='text' name='user_passwd'></td>
+                               </tr>
+                               <tr style='vertical-align:top'>
+                                <td>database</td>
+                                <td><input type='text' name='database_name'></td>
                                </tr>
                                <tr style='vertical-align:top'><td><input type='submit'></td></tr>
                              </table>

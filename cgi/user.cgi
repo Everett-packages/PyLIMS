@@ -1,4 +1,4 @@
-#!C:\Python34\python.exe
+#!/usr/bin/python3
 import argparse
 import textwrap
 import sys
@@ -8,15 +8,11 @@ import LimsCore
 
 LimsCore.start_cgi_page()
 
-db = LimsCore.LimsDB('lims_admin', 'pa!#%', 'pylims')
+db = LimsCore.LimsDB('admin', 'admin1', 'pylims_dev')
 privileges = db.privileges()
 print('pp', privileges)
 
 print("\n\n")
-
-db = LimsCore.LimsDB('lims_test', 'pt!#%', 'pylims')
-privileges = db.privileges()
-print('pp', privileges)
 
 
 print ('F1: ', LimsCore.Data.cgi)
