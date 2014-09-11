@@ -6,6 +6,7 @@ import xmltodict
 import time
 import pymysql
 import hashlib
+from http import cookies
 
 # done 123
 
@@ -96,22 +97,39 @@ def start_cgi_page(page_title='untitled'):
     cgitb.enable(display=1, logdir="tmp")
 
     Data.cgi = cgi.FieldStorage()
+    Data.log = "start<br>"
+
+    for v in Data.cgi:
+        Data.log += "Data.cgi |{0}| |{1}|<br>".format(v, Data.cgi[v].value)
 
     # parse cookies
-    cookies = []
+    parsedCookies = {}
+    cookiesToSet = cookies.SimpleCookie()
+
 
     if 'HTTP_COOKIE' in os.environ:
-        cookies = os.environ['HTTP_COOKIE'].split('; ')
+        cookie_list = os.environ['HTTP_COOKIE'].split(';')
 
-        for cookie in cookies:
-            cookie = cookie.split('=')
-            Data.cgi[cookie[0]] = cookie[1]
+        Data.log += "Cookie parser ({0})<br>".format(os.environ['HTTP_COOKIE'])
 
-    cookieVariables = ['user_id', 'user_passwd', 'database_name']
-    cookiesToSet = ''
+        for cookie in cookie_list:
+            cookie_var, cookie_value= cookie.split('=')
+            parsedCookies[cookie_var.strip()] = cookie_value.strip()
+
+    cookieVariables = ['user_id', 'user_passwd', 'database_name', 'test']
     for v in cookieVariables:
-        if v in Data.cgi and v not in cookies:
-                cookiesToSet += "Set-Cookie: {0}={1}\n".format(v, Data.cgi[v])
+        if v in Data.cgi and v not in parsedCookies:
+            cookiesToSet[v] = Data.cgi[v].value
+            Data.log += "+ requesting cookie |{0}| |{1}|<br>".format(v, Data.cgi[v].value)
+        elif v in parsedCookies and v not in Data.cgi:
+            Data.cgi.add_field(v, parsedCookies[v])
+            #Data.cgi[v] = parsedCookies[v]
+            Data.log += "~ adding cookie data to Data.cgi |{0}| |{1}|<br>".format(v, parsedCookies[v])
+    else:
+        pass
+
+    cookiesToSet['test'] = 'test_value'
+
 
     # determine the name of the script calling this module
     m = re.search(r'([^/]+)$', inspect.stack()[1][1], re.M | re.I)
@@ -142,9 +160,9 @@ def start_cgi_page(page_title='untitled'):
     if os.path.isfile('css/all.css'):
         css_code += "<link rel='stylesheet' type='text/css' href='css/all.css'>\n"
 
-    # assemble html head so that it can be printed when needed
-    html_header = '''Content-type: text/html
-    {0}
+    html_header = '''{0}
+    Content-type: text/html
+
     <html>
      <head>
       <title>{1}</title>
@@ -155,7 +173,7 @@ def start_cgi_page(page_title='untitled'):
     <table style='border-collapse: collapse;'><tr>
      <td style='padding: 0px'><img src='../img/icons/science2.png' style='height:40px'> &nbsp; </td>
      <td style='padding: 0px'>&nbsp; LIMS  ({4})</td></tr></table>
-    '''.format(cookiesToSet, page_title, js_code, css_code, 'user_id')
+    '''.format(cookiesToSet.output(), page_title, js_code, css_code, 'user_id')
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
@@ -193,6 +211,8 @@ def start_cgi_page(page_title='untitled'):
     else:
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header))
+
+        print("Cookie object: ", cookiesToSet, "<br><br>")
 
     return
 

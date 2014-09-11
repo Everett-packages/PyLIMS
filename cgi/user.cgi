@@ -12,10 +12,12 @@ db = LimsCore.LimsDB('admin', 'admin1', 'pylims_dev')
 privileges = db.privileges()
 print('pp', privileges)
 
-print("\n\n")
+print("<br><br>")
 
 
-print ('F1: ', LimsCore.Data.cgi)
+print ('Data.cgi: ', LimsCore.Data.cgi, "<br><br>")
+
+print ('Data.log: ', LimsCore.Data.log, "<br><br>")
 
 #r = db.fetchall("select * from protein")
 #for a in r:
