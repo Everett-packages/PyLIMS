@@ -15,9 +15,7 @@ print('pp', privileges)
 print("<br><br>")
 
 
-print ('Data.cgi: ', LimsCore.Data.cgi, "<br><br>")
-
-print ('Data.log: ', LimsCore.Data.log, "<br><br>")
+print ('Data.cgiVars: ', LimsCore.Data.cgiVars, "<br><br>")
 
 #r = db.fetchall("select * from protein")
 #for a in r:

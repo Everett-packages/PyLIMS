@@ -96,49 +96,45 @@ def start_cgi_page(page_title='untitled'):
 
     cgitb.enable(display=1, logdir="tmp")
 
+    # Make cgi.FieldStorage available to the calling script via the Data name space
     Data.cgi = cgi.FieldStorage()
-    Data.log = "start<br>"
 
+    # Store variable, value pairs from cgi.FieldStorage in Data.cgiVars dict for easy access and manipulation
+    Data.cgiVars = {}
     for v in Data.cgi:
-        Data.log += "Data.cgi |{0}| |{1}|<br>".format(v, Data.cgi[v].value)
+        Data.cgiVars[v] = Data.cgi[v].value
 
     # parse cookies
     parsedCookies = {}
     cookiesToSet = cookies.SimpleCookie()
 
-
     if 'HTTP_COOKIE' in os.environ:
         cookie_list = os.environ['HTTP_COOKIE'].split(';')
-
-        Data.log += "Cookie parser ({0})<br>".format(os.environ['HTTP_COOKIE'])
 
         for cookie in cookie_list:
             cookie_var, cookie_value= cookie.split('=')
             parsedCookies[cookie_var.strip()] = cookie_value.strip()
 
-    cookieVariables = ['user_id', 'user_passwd', 'database_name', 'test']
+    # Specific variables need to be stored in both Data.cgiVars and http cookies.
+    # If a variable is found in Data.cgiVars but not stored as a cookie then set the cookie
+    # If a variable is found in a cookie but not already stored in Data.cgiVars then store the variable in Data.cgiVars
+    cookieVariables = ['user_id', 'user_passwd', 'database_name']
     for v in cookieVariables:
-        if v in Data.cgi and v not in parsedCookies:
-            cookiesToSet[v] = Data.cgi[v].value
-            Data.log += "+ requesting cookie |{0}| |{1}|<br>".format(v, Data.cgi[v].value)
-        elif v in parsedCookies and v not in Data.cgi:
-            Data.cgi.add_field(v, parsedCookies[v])
-            #Data.cgi[v] = parsedCookies[v]
-            Data.log += "~ adding cookie data to Data.cgi |{0}| |{1}|<br>".format(v, parsedCookies[v])
-    else:
-        pass
+        if v in Data.cgiVars and v not in parsedCookies:
+            cookiesToSet[v] = Data.cgiVars[v]
+        elif v in parsedCookies and v not in Data.cgiVars:
+            Data.cgiVars[v] = parsedCookies[v]
+        else:
+            pass
 
-    cookiesToSet['test'] = 'test_value'
-
+    # Determine the name of the script calling this module and determine if there is a coresponding
+    # .js file.  ie.  protein.cgi call this module then check for protein.js
+    # If the file exists then add a line to the header to import the js file and then print the HTML header.
+    # Do the same for .css files then print the default LIMS header including the relevant js and css code.
 
     # determine the name of the script calling this module
     m = re.search(r'([^/]+)$', inspect.stack()[1][1], re.M | re.I)
     calling_file = m.group(1)
-
-    # Determine the name of the script calling this module and determine if there is a coresponding
-    # .js file.  ie.  protein.cgi call this modeule then check for protein.js
-    # If the file exists then add a line to the header to import the js file and then prtin the HTML header.
-    # Do the same for .css files then print the default LIMS header including the relevant js and css code.
 
     js_file = re.sub(r'\.\w+$', '.js', inspect.stack()[1][1])
     m = re.search(r'([^/]+)$', js_file, re.M | re.I)
@@ -160,8 +156,9 @@ def start_cgi_page(page_title='untitled'):
     if os.path.isfile('css/all.css'):
         css_code += "<link rel='stylesheet' type='text/css' href='css/all.css'>\n"
 
-    html_header = '''{0}
-    Content-type: text/html
+
+    # Assemble the HTML header
+    html_header = '''{0}Content-type: text/html
 
     <html>
      <head>
@@ -177,7 +174,7 @@ def start_cgi_page(page_title='untitled'):
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
-    if 'user_id' not in Data.cgi:
+    if 'user_id' not in Data.cgiVars:
         s = '''<br>
             <table><tr style='vertical-align:top'><td><img src ='../img/icons/small57.png' style='height:30px'></td>
                    <td style='width:15px'></td>
@@ -211,8 +208,6 @@ def start_cgi_page(page_title='untitled'):
     else:
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header))
-
-        print("Cookie object: ", cookiesToSet, "<br><br>")
 
     return
 
