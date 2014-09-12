@@ -6,6 +6,8 @@ import xmltodict
 import time
 import pymysql
 import hashlib
+import string
+import random
 from http import cookies
 
 # done 123
@@ -167,38 +169,51 @@ def start_cgi_page(page_title='untitled'):
       {3}
     </head>
     <body>	
-    <table style='border-collapse: collapse;'><tr>
-     <td style='padding: 0px'><img src='../img/icons/science2.png' style='height:40px'> &nbsp; </td>
-     <td style='padding: 0px'>&nbsp; LIMS  ({4})</td></tr></table>
-    '''.format(cookiesToSet.output(), page_title, js_code, css_code, 'user_id')
+    <table style='width:100%; border-collapse: collapse;'>
+     <tr>
+      <td style='padding: 0px; width:50px'><img src='../img/icons/science2.png' style='height:35px'></td>
+      <td style='padding: 0px; text-align: left;'>PyLIMS</td>
+      <td style='padding: 0px; text-align: right;'><div id='login_info'></div></td>
+     </tr>
+    </table>
+    '''.format(cookiesToSet.output(), page_title, js_code, css_code)
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
     if 'user_id' not in Data.cgiVars:
         s = '''<br>
-            <table><tr style='vertical-align:top'><td><img src ='../img/icons/small57.png' style='height:30px'></td>
-                   <td style='width:15px'></td>
-                   <td>LIMS is restricted to registered users.<br>Please sign in.</td><td style='width:15px'></td>
-                       <td>
-                          <form name=login action='%s' method='post'>
-                             <table>
-                               <tr style='vertical-align:top'>
-                                 <td>user id</td>
-                                 <td><input type='text' name='user_id'></td>
-                                </tr>
-                               <tr style='vertical-align:top'>
-                                <td>password</td>
-                                <td><input type='text' name='user_passwd'></td>
-                               </tr>
-                               <tr style='vertical-align:top'>
-                                <td>database</td>
-                                <td><input type='text' name='database_name'></td>
-                               </tr>
-                               <tr style='vertical-align:top'><td><input type='submit'></td></tr>
-                             </table>
-                             <input type='hidden' name='action' value='verify_user_login'>
-                           </form>
-                       </td></tr></table>
+            <table style='border-collapse: collapse;'>
+             <tr style='vertical-align:top'>
+              <td style='padding: 0px; width:50px; text-align: left;'>
+                <img src ='../img/icons/small57.png' style='height:30px'>
+              </td>
+              <td style='text-align: left;'>PyLIMS is restricted to registered users.<br>Please sign in.</td>
+              <td style='width:10px'></td>
+              <td style='padding: 0px; text-align: left;'>
+                <form name="login" accept-charset="UTF-8" action="%s" method="post">
+                  <table style='border-collapse: collapse;'>
+                   <tr style='vertical-align:top'>
+                    <td>user id</td>
+                    <td style='width:10px'></td>
+                    <td><input type='text' name='user_id'></td>
+                   </tr>
+                   <tr style='vertical-align:top'>
+                    <td>password</td>
+                    <td style='width:10px'></td>
+                    <td><input type='text' name='user_passwd'></td>
+                   </tr>
+                   <tr style='vertical-align:top'>
+                    <td>database</td>
+                    <td style='width:10px'></td>
+                    <td><input type='text' name='database_name'></td>
+                   </tr>
+                   <tr style='vertical-align:top'><td><input type='submit' value='log in'></td></tr>
+                  </table>
+                  <input type='hidden' name='action' value='verify_user_login'>
+                </form>
+              </td>
+             </tr>
+            </table>
         ''' % calling_file
 
         print(textwrap.dedent(html_header))
@@ -209,8 +224,14 @@ def start_cgi_page(page_title='untitled'):
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header))
 
+        # Update interface header with login info
+        print("<script>document.getElementById('login_info').innerHTML='{0}'</script>\n".format(Data.cgiVars['user_id']))
+
     return
 
-def end_cgi_page():
+def end_cgi_page(id_length=5):
     print('</body></html>')
     return 0
+
+def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(length))
