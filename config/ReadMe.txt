@@ -24,4 +24,6 @@ GRANT SELECT, INSERT, DELETE, UPDATE ON pylims_dev.* TO 'admin'@'%';
 CREATE USER 'guest'@'%' IDENTIFIED BY 'guest1';
 GRANT SELECT ON pylims_dev.* TO 'guest'@'%';
 
+CREATE USER 'expression'@'%' IDENTIFIED BY 'expression1';
+GRANT SELECT ON pylims_dev.expression TO 'expression'@'%';
 

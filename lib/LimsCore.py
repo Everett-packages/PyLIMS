@@ -10,8 +10,6 @@ import string
 import random
 from http import cookies
 
-# done 123
-
 class EmptyClass:
     pass
 
@@ -60,6 +58,11 @@ class LimsDB:
     def privileges(self, required_privileges=''):
         qr = self.fetchall("show grants")
         qr.pop(0)
+
+        tr = self.fetchall("show tables")
+        tr.pop(0)
+
+        all_actions = ['SELECT', 'UPDATE', 'INSERT', 'DELETE']
 
         privileges = {}
 
@@ -235,3 +238,8 @@ def end_cgi_page(id_length=5):
 
 def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(length))
+
+def create_sequence_digest(sequence):
+    hash = hashlib.sha1()
+    hash.update(sequence.encode('utf-8'))
+    return hash.hexdigest()

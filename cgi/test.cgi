@@ -20,6 +20,9 @@ print("Random id: ", id, "<br>")
 id = LimsCore.create_randomized_id(25, 'abc123')
 print("Random id: ", id, "<br>")
 
+sequence = 'MHREWQPLKSCNMEADFTY'
+digest = LimsCore.create_sequence_digest(sequence)
+print("Digest of sequence: ", sequence, " -> ", digest, "<br><br>\n")
 
 print ('Data.cgiVars: ', LimsCore.Data.cgiVars, "<br><br>")
 
