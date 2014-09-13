@@ -3,6 +3,7 @@ import argparse
 import textwrap
 import sys
 sys.path.append("../lib")
+from pprintpp import pprint as pp
 
 import LimsCore
 
@@ -31,6 +32,11 @@ print ('Data.cgiVars: ', LimsCore.Data.cgiVars, "<br><br>")
 #  print(a['protein_id'])
 
 db.privileges()
+
+
+print("Log:<br>", LimsCore.Data.log,"<br><br>\n")
+
+pp(LimsCore.Data.tr)
 
 db.disconnect()
 

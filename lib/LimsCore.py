@@ -8,6 +8,7 @@ import pymysql
 import hashlib
 import string
 import random
+from pprintpp import pprint as pp
 from http import cookies
 
 class EmptyClass:
@@ -15,6 +16,7 @@ class EmptyClass:
 
 # Global NameSpace to convey data to the calling module
 Data = EmptyClass()
+Data.log = ''
 
 # read in config xml and convert xml to an object
 # ie.  config['LIMS']['software']['blast'] = path to local blast installation
@@ -56,8 +58,8 @@ class LimsDB:
         self.conn.close()
 
     def privileges(self, required_privileges=''):
-        qr = self.fetchall("show grants")
-        qr.pop(0)
+        gr = self.fetchall("show grants")
+        gr.pop(0)
 
         tr = self.fetchall("show tables")
         tr.pop(0)
@@ -66,7 +68,9 @@ class LimsDB:
 
         privileges = {}
 
-        for r in qr:
+        Data.tr = tr
+
+        for r in gr:
             for k in r:
                 p = re.compile(r'^GRANT\s(?P<actions>.+?)\sON\s\`(?P<database>[^\`]+)\`\.\`?(?P<table>.+?)\`?\sTO')
                 m = p.search(r[k])
@@ -75,19 +79,30 @@ class LimsDB:
                 if ( md ):
 
                     if md['table'] is '*':
-                        md['table'] = 'ALL TABLES'
+                        for t in tr:
+                            for table in t:
+                                if md['table'] not in privileges:
+                                    privileges[table] = {}
 
-                    for action in ( re.split(r'\s*,?\s*', md['actions']) ):
-                        action.strip()
-                        if ( action is '*'):
-                            action = 'ALL ACTIONS'
+                                for action in ( re.split(r'\s*,?\s*', md['actions']) ):
+                                    action.strip()
 
+                                    if (action is '*'):
+                                        for a in all_actions:
+                                            privileges[table][a] = True
+                                    else:
+                                        privileges[table][action] = True
+                    else:
                         if md['table'] not in privileges:
                             privileges[md['table']] = {}
-                            privileges[md['table']][action] = True
 
-                        else:
-                            if action not in privileges[md['table']]:
+                        for action in ( re.split(r'\s*,?\s*', md['actions']) ):
+                            action.strip()
+
+                            if (action is '*'):
+                                for a in all_actions:
+                                    privileges[md['table']][a] = True
+                            else:
                                 privileges[md['table']][action] = True
                 else:
                     print("Error, can not parse MySQL privileges")
@@ -163,7 +178,9 @@ def start_cgi_page(page_title='untitled'):
 
 
     # Assemble the HTML header
-    html_header = '''{0}Content-type: text/html
+    html_header = '''\
+    {0}
+    Content-type: text/html
 
     <html>
      <head>
@@ -171,7 +188,7 @@ def start_cgi_page(page_title='untitled'):
       {2}
       {3}
     </head>
-    <body>	
+    <body>
     <table style='width:100%; border-collapse: collapse;'>
      <tr>
       <td style='padding: 0px; width:50px'><img src='../img/icons/science2.png' style='height:35px'></td>
@@ -184,7 +201,8 @@ def start_cgi_page(page_title='untitled'):
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
     if 'user_id' not in Data.cgiVars:
-        s = '''<br>
+        s = '''\
+        <br>
             <table style='border-collapse: collapse;'>
              <tr style='vertical-align:top'>
               <td style='padding: 0px; width:50px; text-align: left;'>
