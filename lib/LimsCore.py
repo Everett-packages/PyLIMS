@@ -178,7 +178,7 @@ def start_cgi_page(page_title='untitled'):
 
 
     # Assemble the HTML header
-    html_header = '''\
+    html_header = """\
     {0}
     Content-type: text/html
 
@@ -196,12 +196,12 @@ def start_cgi_page(page_title='untitled'):
       <td style='padding: 0px; text-align: right;'><div id='login_info'></div></td>
      </tr>
     </table>
-    '''.format(cookiesToSet.output(), page_title, js_code, css_code)
+    """.format(cookiesToSet.output(), page_title, js_code, css_code)
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
     if 'user_id' not in Data.cgiVars:
-        s = '''\
+        s = """\
         <br>
             <table style='border-collapse: collapse;'>
              <tr style='vertical-align:top'>
@@ -235,15 +235,15 @@ def start_cgi_page(page_title='untitled'):
               </td>
              </tr>
             </table>
-        ''' % calling_file
+        """ % calling_file
 
-        print(textwrap.dedent(html_header))
+        print(textwrap.dedent(html_header).strip())
         print(textwrap.dedent(s))
         end_cgi_page()
         exit()
     else:
         # User successfully logged in via cookie
-        print(textwrap.dedent(html_header))
+        print(textwrap.dedent(html_header).strip())
 
         # Update interface header with login info
         print("<script>document.getElementById('login_info').innerHTML='{0}'</script>\n".format(Data.cgiVars['user_id']))
