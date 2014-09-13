@@ -62,13 +62,16 @@ class LimsDB:
         gr.pop(0)
 
         tr = self.fetchall("show tables")
-        tr.pop(0)
+        tables = []
+        for t in tr:
+            for tt in t:
+                tables.append(t[tt])
 
         all_actions = ['SELECT', 'UPDATE', 'INSERT', 'DELETE']
 
         privileges = {}
 
-        Data.tr = tr
+        Data.tr = tables
 
         for r in gr:
             for k in r:
@@ -79,19 +82,18 @@ class LimsDB:
                 if ( md ):
 
                     if md['table'] is '*':
-                        for t in tr:
-                            for table in t:
-                                if md['table'] not in privileges:
-                                    privileges[table] = {}
+                        for table in tables:
+                            if table not in privileges:
+                                privileges[table] = {}
 
-                                for action in ( re.split(r'\s*,?\s*', md['actions']) ):
-                                    action.strip()
+                            for action in ( re.split(r'\s*,?\s*', md['actions']) ):
+                                action.strip()
 
-                                    if (action is '*'):
-                                        for a in all_actions:
-                                            privileges[table][a] = True
-                                    else:
-                                        privileges[table][action] = True
+                                if (action is '*'):
+                                    for a in all_actions:
+                                         privileges[table][a] = True
+                                else:
+                                    privileges[table][action] = True
                     else:
                         if md['table'] not in privileges:
                             privileges[md['table']] = {}
@@ -178,7 +180,7 @@ def start_cgi_page(page_title='untitled'):
 
 
     # Assemble the HTML header
-    html_header = """\
+    html_header = '''\
     {0}
     Content-type: text/html
 
@@ -196,12 +198,12 @@ def start_cgi_page(page_title='untitled'):
       <td style='padding: 0px; text-align: right;'><div id='login_info'></div></td>
      </tr>
     </table>
-    """.format(cookiesToSet.output(), page_title, js_code, css_code)
+    '''.format(cookiesToSet.output(), page_title, js_code, css_code)
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
     if 'user_id' not in Data.cgiVars:
-        s = """\
+        s = '''\
         <br>
             <table style='border-collapse: collapse;'>
              <tr style='vertical-align:top'>
@@ -235,11 +237,11 @@ def start_cgi_page(page_title='untitled'):
               </td>
              </tr>
             </table>
-        """ % calling_file
+        ''' % calling_file
 
         print(textwrap.dedent(html_header).strip())
-        print(textwrap.dedent(s))
-        end_cgi_page()
+        print(textwrap.dedent(s).strip())
+
         exit()
     else:
         # User successfully logged in via cookie
