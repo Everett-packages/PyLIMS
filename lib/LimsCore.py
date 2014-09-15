@@ -1,5 +1,6 @@
 import textwrap
 import os
+import sys
 import inspect
 import re
 import xmltodict
@@ -16,7 +17,6 @@ class EmptyClass:
 
 # Global NameSpace to convey data to the calling module
 Data = EmptyClass()
-Data.log = ''
 
 # read in config xml and convert xml to an object
 # ie.  config['LIMS']['software']['blast'] = path to local blast installation
@@ -101,7 +101,7 @@ class LimsDB:
                         for action in ( re.split(r'\s*,?\s*', md['actions']) ):
                             action.strip()
 
-                            if (action is '*'):
+                            if action is '*':
                                 for a in all_actions:
                                     privileges[md['table']][a] = True
                             else:
@@ -137,10 +137,26 @@ def start_cgi_page(page_title='untitled'):
             cookie_var, cookie_value= cookie.split('=')
             parsedCookies[cookie_var.strip()] = cookie_value.strip()
 
+
+    # CGI log
+    # Each user will have a log file used primarily for debugging purposes.
+    # The name of the log file will be tracked with cookies and a new log file name
+    # will be created if an existing log file name is not found in the user's cookies.
+    Data.cgiVars['cgi_log_file'] = ''
+    if 'cgi_log_file' in parsedCookies:
+        Data.cgiVars['cgi_log_file'] = parsedCookies['cgi_log_file']
+    else:
+        Data.cgiVars['cgi_log_file'] = create_randomized_id(5) + '.log.txt'
+
+    # Start the log for this CGI page.
+    with open('../logs/cgi/' + Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
+        cgi_log_file.write(os.path.basename(sys.argv[0]))
+
+
     # Specific variables need to be stored in both Data.cgiVars and http cookies.
     # If a variable is found in Data.cgiVars but not stored as a cookie then set the cookie
     # If a variable is found in a cookie but not already stored in Data.cgiVars then store the variable in Data.cgiVars
-    cookieVariables = ['user_id', 'user_passwd', 'database_name']
+    cookieVariables = ['user_id', 'user_passwd', 'database_name', 'cgi_log_file']
     for v in cookieVariables:
         if v in Data.cgiVars and v not in parsedCookies:
             cookiesToSet[v] = Data.cgiVars[v]
@@ -186,6 +202,8 @@ def start_cgi_page(page_title='untitled'):
 
     <html>
      <head>
+     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+     <meta content="utf-8" http-equiv="encoding">
       <title>{1}</title>
       {2}
       {3}
@@ -198,7 +216,7 @@ def start_cgi_page(page_title='untitled'):
       <td style='padding: 0px; text-align: right;'><div id='login_info'></div></td>
      </tr>
     </table>
-    '''.format(cookiesToSet.output(), page_title, js_code, css_code)
+    '''.format(cookiesToSet.output().strip(), page_title, js_code, css_code)
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
@@ -248,7 +266,8 @@ def start_cgi_page(page_title='untitled'):
         print(textwrap.dedent(html_header).strip())
 
         # Update interface header with login info
-        print("<script>document.getElementById('login_info').innerHTML='{0}'</script>\n".format(Data.cgiVars['user_id']))
+        s = '{0} (<u><a onClick=\'PyLIMS_logout()\'>logout</a></u>)'.format(Data.cgiVars['user_id'])
+        print("<script>document.getElementById('login_info').innerHTML=\"{0}\"</script>\n".format(s))
 
     return
 
