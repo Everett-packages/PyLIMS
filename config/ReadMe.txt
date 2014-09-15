@@ -27,3 +27,7 @@ GRANT SELECT ON pylims_dev.* TO 'guest'@'%';
 CREATE USER 'expression'@'%' IDENTIFIED BY 'expression1';
 GRANT SELECT ON pylims_dev.expression TO 'expression'@'%';
 
+create table construct (construct_id varchar(50) not null, primary key(construct_id));
+create table expression (expression_id varchar(50) not null, primary key(expression_id));
+create table purification (purification_id varchar(50) not null, primary key(purification_id));
+

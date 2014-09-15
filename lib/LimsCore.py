@@ -4,7 +4,7 @@ import sys
 import inspect
 import re
 import xmltodict
-import time
+from time import gmtime, strftime
 import pymysql
 import hashlib
 import string
@@ -57,11 +57,12 @@ class LimsDB:
         self.cur.close()
         self.conn.close()
 
-    def privileges(self, required_privileges=''):
+    def privileges(self):
         gr = self.fetchall("show grants")
         gr.pop(0)
 
         tr = self.fetchall("show tables")
+
         tables = []
         for t in tr:
             for tt in t:
@@ -70,8 +71,6 @@ class LimsDB:
         all_actions = ['SELECT', 'UPDATE', 'INSERT', 'DELETE']
 
         privileges = {}
-
-        Data.tr = tables
 
         for r in gr:
             for k in r:
@@ -89,11 +88,12 @@ class LimsDB:
                             for action in ( re.split(r'\s*,?\s*', md['actions']) ):
                                 action.strip()
 
-                                if (action is '*'):
+                                if action is '*':
                                     for a in all_actions:
                                          privileges[table][a] = True
                                 else:
                                     privileges[table][action] = True
+
                     else:
                         if md['table'] not in privileges:
                             privileges[md['table']] = {}
@@ -111,6 +111,10 @@ class LimsDB:
                     exit()
 
         return privileges
+
+    def __lt__(self, *args, **kwargs):
+        return super().__lt__(*args, **kwargs)
+
 
 def start_cgi_page(page_title='untitled'):
     import cgitb
@@ -148,9 +152,9 @@ def start_cgi_page(page_title='untitled'):
     else:
         Data.cgiVars['cgi_log_file'] = create_randomized_id(5) + '.log.txt'
 
-    # Start the log for this CGI page.
-    with open('../logs/cgi/' + Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
-        cgi_log_file.write(os.path.basename(sys.argv[0]))
+    # Start the log for this CGI page
+    update_cgi_log("start")
+
 
 
     # Specific variables need to be stored in both Data.cgiVars and http cookies.
@@ -213,7 +217,10 @@ def start_cgi_page(page_title='untitled'):
      <tr>
       <td style='padding: 0px; width:50px'><img src='../img/icons/science2.png' style='height:35px'></td>
       <td style='padding: 0px; text-align: left;'>PyLIMS</td>
-      <td style='padding: 0px; text-align: right;'><div id='login_info'></div></td>
+      <td style='padding: 0px; text-align: right; width:50%'>
+         <a id='cgi_log'></a> &nbsp; &nbsp;
+         <a id='login_info'></a>
+      </td>
      </tr>
     </table>
     '''.format(cookiesToSet.output().strip(), page_title, js_code, css_code)
@@ -266,14 +273,17 @@ def start_cgi_page(page_title='untitled'):
         print(textwrap.dedent(html_header).strip())
 
         # Update interface header with login info
+        s = '(<u><a href=\'../logs/cgi/{0}\'>Log</a></u>)'.format(Data.cgiVars['cgi_log_file'])
+        print("<script>document.getElementById('cgi_log').innerHTML=\"{0}\"</script>\n".format(s))
+
+        # Update interface header with login info
         s = '{0} (<u><a onClick=\'PyLIMS_logout()\'>logout</a></u>)'.format(Data.cgiVars['user_id'])
         print("<script>document.getElementById('login_info').innerHTML=\"{0}\"</script>\n".format(s))
 
     return
 
-def end_cgi_page(id_length=5):
+def end_cgi_page():
     print('</body></html>')
-    return 0
 
 def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(length))
@@ -282,3 +292,8 @@ def create_sequence_digest(sequence):
     hash = hashlib.sha1()
     hash.update(sequence.encode('utf-8'))
     return hash.hexdigest()
+
+def update_cgi_log(text):
+    ts = strftime("%Y-%m-%d %I:%M%p", gmtime())
+    with open('../logs/cgi/' + Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
+        cgi_log_file.write('['+os.path.basename(sys.argv[0])+' '+ts+"]\n"+text+"\n")
