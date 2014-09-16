@@ -145,6 +145,7 @@ def start_cgi_page(page_title='untitled'):
     # Each user will have a log file used primarily for debugging purposes.
     # The name of the log file will be tracked with cookies and a new log file name
     # will be created if an existing log file name is not found in the user's cookies.
+
     Data.cgiVars['cgi_log_file'] = ''
     if 'cgi_log_file' in parsedCookies:
         Data.cgiVars['cgi_log_file'] = parsedCookies['cgi_log_file']
@@ -152,11 +153,13 @@ def start_cgi_page(page_title='untitled'):
         Data.cgiVars['cgi_log_file'] = "../../logs/cgi/" + create_randomized_id(5) + ".log.html"
 
     # Start the log for this CGI page
+
     update_cgi_log('page_start', "starting page")
 
     # Specific variables need to be stored in both Data.cgiVars and http cookies.
     # If a variable is found in Data.cgiVars but not stored as a cookie then set the cookie
     # If a variable is found in a cookie but not already stored in Data.cgiVars then store the variable in Data.cgiVars
+
     cookieVariables = ['user_id', 'user_passwd', 'database_name', 'cgi_log_file']
     for v in cookieVariables:
         if v in Data.cgiVars and v not in parsedCookies:
@@ -270,14 +273,9 @@ def start_cgi_page(page_title='untitled'):
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header).strip())
 
-        #Data.cgiVars['cgi_log_file'] = 'abc'
-        print("F2 |", type(Data.cgiVars['cgi_log_file']), "|<br>")
-
         # Update interface header with login info
         s = '(<u><a href=\'{0}\'>Log</a></u>)'.format(Data.cgiVars['cgi_log_file'])
         print("<script>document.getElementById('cgi_log').innerHTML=\"{0}\"</script>\n".format(s))
-
-
 
         # Update interface header with login info
         s = '{0} (<u><a onClick=\'PyLIMS_logout()\'>logout</a></u>)'.format(Data.cgiVars['user_id'])
@@ -299,9 +297,21 @@ def create_sequence_digest(sequence):
 def update_cgi_log(update_type, text):
     ts = strftime("%Y-%m-%d %I:%M%p", gmtime())
 
+    # Color code log enteries according to provided update_type
+    text_color = '#000000'
+    text_colors = {'page_start':'#00A300', 'information':'#0052A3', 'warning':'#B2B200', 'error':'#FF0000'}
+    if update_type in text_colors:
+        text_color = text_colors[update_type]
+
+    # Use the last three directories in the full script path to identify the script in the log file
+    path_array = sys.argv[0].split('/')
+    report_path = '/'.join(path_array[len(path_array)-3:])
+    log_tag = '[' + '<font color="{0}">'.format(text_color) + report_path +' '+ ts + '</font>]<br>'
+
+    # If log file exists -- add the update text. If the file does not exist, print a HTML header than the update text.
     if os.path.isfile(Data.cgiVars['cgi_log_file']):
         with open(Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
-            cgi_log_file.write('['+os.path.basename(sys.argv[0])+' '+ts+"]\n"+text+"<br><br>\n")
+            cgi_log_file.write(log_tag + text + "<br><br>\n")
     else:
         html_header = '''\
                  <html>
@@ -310,6 +320,6 @@ def update_cgi_log(update_type, text):
                   </head>
                   <body style='font-family:"Courier New", Courier, monospace'; font-size:8px'>
                  '''
-        with open(Data.cgiVars['cgi_log_file'], 'a') as cgi_log_file:
+        with open(Data.cgiVars['cgi_log_file'], 'w') as cgi_log_file:
             cgi_log_file.write(textwrap.dedent(html_header))
-            cgi_log_file.write('['+os.path.basename(sys.argv[0])+' '+ts+"]\n"+text+"<br><br>\n")
+            cgi_log_file.write(log_tag + text + "<br><br>\n")
