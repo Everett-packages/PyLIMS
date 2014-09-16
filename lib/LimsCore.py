@@ -21,7 +21,7 @@ Data = EmptyClass()
 # read in config xml and convert xml to an object
 # ie.  config['LIMS']['software']['blast'] = path to local blast installation
 
-with open('../config/config.xml.protected') as x:
+with open('../../config/config.xml.protected') as x:
     xml = x.read()
     config = xmltodict.parse(xml)
 
@@ -139,8 +139,7 @@ def start_cgi_page(page_title='untitled'):
 
         for cookie in cookie_list:
             cookie_var, cookie_value= cookie.split('=')
-            parsedCookies[cookie_var.strip()] = cookie_value.strip()
-
+            parsedCookies[cookie_var.strip()] = cookie_value.replace('"', '').strip()
 
     # CGI log
     # Each user will have a log file used primarily for debugging purposes.
@@ -150,12 +149,10 @@ def start_cgi_page(page_title='untitled'):
     if 'cgi_log_file' in parsedCookies:
         Data.cgiVars['cgi_log_file'] = parsedCookies['cgi_log_file']
     else:
-        Data.cgiVars['cgi_log_file'] = create_randomized_id(5) + '.log.txt'
+        Data.cgiVars['cgi_log_file'] = "../../logs/cgi/" + create_randomized_id(5) + ".log.html"
 
     # Start the log for this CGI page
-    update_cgi_log("start")
-
-
+    update_cgi_log('page_start', "starting page")
 
     # Specific variables need to be stored in both Data.cgiVars and http cookies.
     # If a variable is found in Data.cgiVars but not stored as a cookie then set the cookie
@@ -164,6 +161,7 @@ def start_cgi_page(page_title='untitled'):
     for v in cookieVariables:
         if v in Data.cgiVars and v not in parsedCookies:
             cookiesToSet[v] = Data.cgiVars[v]
+            cookiesToSet[v]["path"] = "/"
         elif v in parsedCookies and v not in Data.cgiVars:
             Data.cgiVars[v] = parsedCookies[v]
         else:
@@ -215,7 +213,7 @@ def start_cgi_page(page_title='untitled'):
     <body>
     <table style='width:100%; border-collapse: collapse;'>
      <tr>
-      <td style='padding: 0px; width:50px'><img src='../img/icons/science2.png' style='height:35px'></td>
+      <td style='padding: 0px; width:50px'><img src='../../img/icons/science2.png' style='height:35px'></td>
       <td style='padding: 0px; text-align: left;'>PyLIMS</td>
       <td style='padding: 0px; text-align: right; width:50%'>
          <a id='cgi_log'></a> &nbsp; &nbsp;
@@ -233,7 +231,7 @@ def start_cgi_page(page_title='untitled'):
             <table style='border-collapse: collapse;'>
              <tr style='vertical-align:top'>
               <td style='padding: 0px; width:50px; text-align: left;'>
-                <img src ='../img/icons/small57.png' style='height:30px'>
+                <img src ='../../img/icons/small57.png' style='height:30px'>
               </td>
               <td style='text-align: left;'>PyLIMS is restricted to registered users.<br>Please sign in.</td>
               <td style='width:10px'></td>
@@ -272,9 +270,14 @@ def start_cgi_page(page_title='untitled'):
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header).strip())
 
+        #Data.cgiVars['cgi_log_file'] = 'abc'
+        print("F2 |", type(Data.cgiVars['cgi_log_file']), "|<br>")
+
         # Update interface header with login info
-        s = '(<u><a href=\'../logs/cgi/{0}\'>Log</a></u>)'.format(Data.cgiVars['cgi_log_file'])
+        s = '(<u><a href=\'{0}\'>Log</a></u>)'.format(Data.cgiVars['cgi_log_file'])
         print("<script>document.getElementById('cgi_log').innerHTML=\"{0}\"</script>\n".format(s))
+
+
 
         # Update interface header with login info
         s = '{0} (<u><a onClick=\'PyLIMS_logout()\'>logout</a></u>)'.format(Data.cgiVars['user_id'])
@@ -286,14 +289,27 @@ def end_cgi_page():
     print('</body></html>')
 
 def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(length))
+    return "".join(random.choice(chars) for _ in range(length))
 
 def create_sequence_digest(sequence):
     hash = hashlib.sha1()
     hash.update(sequence.encode('utf-8'))
     return hash.hexdigest()
 
-def update_cgi_log(text):
+def update_cgi_log(update_type, text):
     ts = strftime("%Y-%m-%d %I:%M%p", gmtime())
-    with open('../logs/cgi/' + Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
-        cgi_log_file.write('['+os.path.basename(sys.argv[0])+' '+ts+"]\n"+text+"\n")
+
+    if os.path.isfile(Data.cgiVars['cgi_log_file']):
+        with open(Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
+            cgi_log_file.write('['+os.path.basename(sys.argv[0])+' '+ts+"]\n"+text+"<br><br>\n")
+    else:
+        html_header = '''\
+                 <html>
+                  <head>
+                   <title>CGI log</title>
+                  </head>
+                  <body style='font-family:"Courier New", Courier, monospace'; font-size:8px'>
+                 '''
+        with open(Data.cgiVars['cgi_log_file'], 'a') as cgi_log_file:
+            cgi_log_file.write(textwrap.dedent(html_header))
+            cgi_log_file.write('['+os.path.basename(sys.argv[0])+' '+ts+"]\n"+text+"<br><br>\n")
