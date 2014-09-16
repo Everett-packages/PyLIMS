@@ -308,7 +308,7 @@ def update_cgi_log(update_type, text):
     report_path = '/'.join(path_array[len(path_array)-3:])
     log_tag = '[' + '<font color="{0}">'.format(text_color) + report_path +' '+ ts + '</font>]<br>'
 
-    # If log file exists -- add the update text. If the file does not exist, print a HTML header than the update text.
+    # If log file exists -- add the update text. If the file does not exist, print a HTML header then the update text.
     if os.path.isfile(Data.cgiVars['cgi_log_file']):
         with open(Data.cgiVars['cgi_log_file'], "a") as cgi_log_file:
             cgi_log_file.write(log_tag + text + "<br><br>\n")
