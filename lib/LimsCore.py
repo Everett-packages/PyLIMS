@@ -9,7 +9,7 @@ import pymysql
 import hashlib
 import string
 import random
-from pprintpp import pprint as pp
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from http import cookies
 
 class EmptyClass:
