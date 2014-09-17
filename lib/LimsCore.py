@@ -179,6 +179,9 @@ def start_cgi_page(page_title='untitled'):
     m = re.search(r'([^/]+)$', inspect.stack()[1][1], re.M | re.I)
     calling_file = m.group(1)
 
+    # determine the path of this module
+    module_file_dir = os.path.dirname(__file__);
+
     js_file = re.sub(r'\.\w+$', '.js', inspect.stack()[1][1])
     m = re.search(r'([^/]+)$', js_file, re.M | re.I)
     js_file = 'js/' + m.group(1)
@@ -201,30 +204,33 @@ def start_cgi_page(page_title='untitled'):
 
 
     # Assemble the HTML header
-    html_header = '''\
-    {0}
+    sf = { 'cookies':cookiesToSet.output().strip(), 'title':page_title, 'js_code':js_code, 'css_code':css_code,
+           'image_path':module_file_dir+'/img', 'calling_file':calling_file }
+
+    html_header = '''
+    {cookies}
     Content-type: text/html
 
     <html>
      <head>
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
      <meta content="utf-8" http-equiv="encoding">
-      <title>{1}</title>
-      {2}
-      {3}
+      <title>{title}</title>
+      {js_code}
+      {css_code}
     </head>
     <body>
     <table style='width:100%; border-collapse: collapse;'>
      <tr>
-      <td style='padding: 0px; width:50px'><img src='../../img/icons/science2.png' style='height:35px'></td>
-      <td style='padding: 0px; text-align: left;'>PyLIMS</td>
-      <td style='padding: 0px; text-align: right; width:50%'>
-         <a id='cgi_log'></a> &nbsp; &nbsp;
-         <a id='login_info'></a>
+      <td style='padding: 0px; width:50px'><img src='{image_path}/pylims1.png' style='height:35px'></td>
+      <td align='left' style='padding: 0px; text-align: left '>PyLIMS</td>
+      <td align='right' style='padding: 0px; text-align: right; width:1px'>
+         <div id='hud'></div>
       </td>
      </tr>
     </table>
-    '''.format(cookiesToSet.output().strip(), page_title, js_code, css_code)
+    <hr style='height: 0px; margin: 0px; border-bottom: 1px solid #000000; font-size: 0.5px'><br>
+    '''.format(**sf)
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
 
@@ -234,12 +240,12 @@ def start_cgi_page(page_title='untitled'):
             <table style='border-collapse: collapse;'>
              <tr style='vertical-align:top'>
               <td style='padding: 0px; width:50px; text-align: left;'>
-                <img src ='../../img/icons/small57.png' style='height:30px'>
+                <img src ='{image_path}/lock1.png' style='height:30px'>
               </td>
               <td style='text-align: left;'>PyLIMS is restricted to registered users.<br>Please sign in.</td>
               <td style='width:10px'></td>
               <td style='padding: 0px; text-align: left;'>
-                <form name="login" accept-charset="UTF-8" action="%s" method="post">
+                <form name="login" accept-charset="UTF-8" action="{calling_file}" method="post">
                   <table style='border-collapse: collapse;'>
                    <tr style='vertical-align:top'>
                     <td>user id</td>
@@ -263,7 +269,7 @@ def start_cgi_page(page_title='untitled'):
               </td>
              </tr>
             </table>
-        ''' % calling_file
+        '''.format(**sf)
 
         print(textwrap.dedent(html_header).strip())
         print(textwrap.dedent(s).strip())
@@ -273,15 +279,28 @@ def start_cgi_page(page_title='untitled'):
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header).strip())
 
-        # Update interface header with login info
-        s = '(<u><a href=\'{0}\'>Log</a></u>)'.format(Data.cgiVars['cgi_log_file'])
-        print("<script>document.getElementById('cgi_log').innerHTML=\"{0}\"</script>\n".format(s))
+        sf['user_id'] = Data.cgiVars['user_id']
+        sf['cgi_log_file'] = Data.cgiVars['cgi_log_file']
 
         # Update interface header with login info
-        s = '{0} (<u><a onClick=\'PyLIMS_logout()\'>logout</a></u>)'.format(Data.cgiVars['user_id'])
-        print("<script>document.getElementById('login_info').innerHTML=\"{0}\"</script>\n".format(s))
+        s = '''\
+        <table style='width:300px; border-collapse: collapse;'>
+         <tr>
+          <td align='right' style='vertical-align:middle; padding: 0px;'>
+           {user_id} &nbsp;
+           <img src='{image_path}/HUD_search.png' style='vertical-align:middle'>
+           <img src='{image_path}/HUD_menu.png' style='vertical-align:middle'>
+           <a href='{cgi_log_file}'><img src='{image_path}/HUD_log.png' style='vertical-align:middle'></a>
+           <img src='{image_path}/HUD_help.png' style='vertical-align:middle'>
+           <a onClick='PyLIMS_logout()'><img src='{image_path}/HUD_logout.png' style='vertical-align:middle'></a>
+          </td>
+         </tr>
+        </table>
+        '''.format(**sf)
 
-    return
+        print("<script>document.getElementById('hud').innerHTML=\"{0}\"</script>\n".format(s.replace("\n", "")))
+
+
 
 def end_cgi_page():
     print('</body></html>')
