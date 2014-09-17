@@ -112,9 +112,6 @@ class LimsDB:
 
         return privileges
 
-    def __lt__(self, *args, **kwargs):
-        return super().__lt__(*args, **kwargs)
-
 
 def start_cgi_page(page_title='untitled'):
     import cgitb
