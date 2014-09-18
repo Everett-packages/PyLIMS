@@ -9,19 +9,23 @@ import pymysql
 import hashlib
 import string
 import random
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
+# from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from http import cookies
 
-class EmptyClass:
+
+class DataClass:
+    def __init__(self):
+        self.cgiVars = None
+
     pass
 
 # Global NameSpace to convey data to the calling module
-Data = EmptyClass()
+Data = DataClass()
 
 # read in config xml and convert xml to an object
 # ie.  config['LIMS']['software']['blast'] = path to local blast installation
 
-with open('../../config/config.xml.protected') as x:
+with open('../../config.xml') as x:
     xml = x.read()
     config = xmltodict.parse(xml)
 
@@ -30,13 +34,15 @@ class LimsDB:
     def __init__(self, user_id, user_passwd, database_name):
 
         # connect to the database and define a cursor
-        connection_credentials = {'user': user_id, 'passwd': user_passwd, 'host': 'localhost', 'port': 3306, 'db': database_name}
+        connection_credentials = {'user': user_id, 'passwd': user_passwd, 'host': 'localhost', 'port': 3306,
+                                  'db': database_name}
 
         try:
             self.conn = pymysql.connect(**connection_credentials)
             self.cur = self.conn.cursor(pymysql.cursors.DictCursor)
         except:
-            error_msg = "Error.<br>Could not connect to the database '{0}' using user id '{1}' with password '{2}'".format(database_name, user_id, user_passwd)
+            error_msg = "Error.<br>Could not connect to the database '{0}' using user id '{1}' with password '{2}'". \
+                format(database_name, user_id, user_passwd)
             print(error_msg)
             exit()
 
@@ -90,7 +96,7 @@ class LimsDB:
 
                                 if action is '*':
                                     for a in all_actions:
-                                         privileges[table][a] = True
+                                        privileges[table][a] = True
                                 else:
                                     privileges[table][action] = True
 
@@ -123,7 +129,7 @@ def start_cgi_page(page_title='untitled'):
     Data.cgi = cgi.FieldStorage()
 
     # Store variable, value pairs from cgi.FieldStorage in Data.cgiVars dict for easy access and manipulation
-    Data.cgiVars = {}
+    Data.cgiVars = {'cgi_log_file': '/dev/null'}
     for v in Data.cgi:
         Data.cgiVars[v] = Data.cgi[v].value
 
@@ -135,7 +141,7 @@ def start_cgi_page(page_title='untitled'):
         cookie_list = os.environ['HTTP_COOKIE'].split(';')
 
         for cookie in cookie_list:
-            cookie_var, cookie_value= cookie.split('=')
+            cookie_var, cookie_value = cookie.split('=')
             parsedCookies[cookie_var.strip()] = cookie_value.replace('"', '').strip()
 
     # CGI log
@@ -177,7 +183,7 @@ def start_cgi_page(page_title='untitled'):
     calling_file = m.group(1)
 
     # determine the path of this module
-    module_file_dir = os.path.dirname(__file__);
+    module_file_dir = os.path.dirname(__file__)
 
     js_file = re.sub(r'\.\w+$', '.js', inspect.stack()[1][1])
     m = re.search(r'([^/]+)$', js_file, re.M | re.I)
@@ -201,8 +207,8 @@ def start_cgi_page(page_title='untitled'):
 
 
     # Assemble the HTML header
-    sf = { 'cookies':cookiesToSet.output().strip(), 'title':page_title, 'js_code':js_code, 'css_code':css_code,
-           'image_path':module_file_dir+'/img', 'calling_file':calling_file }
+    sf = {'cookies': cookiesToSet.output().strip(), 'title': page_title, 'js_code': js_code, 'css_code': css_code,
+          'image_path': module_file_dir + '/img', 'calling_file': calling_file}
 
     html_header = '''
     {cookies}
@@ -298,31 +304,33 @@ def start_cgi_page(page_title='untitled'):
         print("<script>document.getElementById('hud').innerHTML=\"{0}\"</script>\n".format(s.replace("\n", "")))
 
 
-
 def end_cgi_page():
     print('</body></html>')
 
+
 def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(length))
+
 
 def create_sequence_digest(sequence):
     hash = hashlib.sha1()
     hash.update(sequence.encode('utf-8'))
     return hash.hexdigest()
 
+
 def update_cgi_log(update_type, text):
     ts = strftime("%Y-%m-%d %I:%M%p", gmtime())
 
     # Color code log enteries according to provided update_type
     text_color = '#000000'
-    text_colors = {'page_start':'#00A300', 'information':'#0052A3', 'warning':'#B2B200', 'error':'#FF0000'}
+    text_colors = {'page_start': '#00A300', 'information': '#0052A3', 'warning': '#B2B200', 'error': '#FF0000'}
     if update_type in text_colors:
         text_color = text_colors[update_type]
 
     # Use the last three directories in the full script path to identify the script in the log file
     path_array = sys.argv[0].split('/')
-    report_path = '/'.join(path_array[len(path_array)-3:])
-    log_tag = '[' + '<font color="{0}">'.format(text_color) + report_path +' '+ ts + '</font>]<br>'
+    report_path = '/'.join(path_array[len(path_array) - 3:])
+    log_tag = '[' + '<font color="{0}">'.format(text_color) + report_path + ' ' + ts + '</font>]<br>'
 
     # If log file exists -- add the update text. If the file does not exist, print a HTML header then the update text.
     if os.path.isfile(Data.cgiVars['cgi_log_file']):

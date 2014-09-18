@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<LIMS>
-  <login_persistence>8</login_persistence>
-  <software>
-    <blast>xyz</blast>
-  </software>
-</LIMS>
