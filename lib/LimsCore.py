@@ -4,11 +4,13 @@ import sys
 import inspect
 import re
 import xmltodict
-from time import gmtime, strftime
+import time
 import pymysql
 import hashlib
 import string
 import random
+import subprocess
+
 # from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from http import cookies
 
@@ -31,6 +33,7 @@ with open('../../config.xml') as x:
 
 
 class LimsDB:
+    # noinspection PyBroadException
     def __init__(self, user_id, user_passwd, database_name):
 
         # connect to the database and define a cursor
@@ -63,6 +66,7 @@ class LimsDB:
         self.cur.close()
         self.conn.close()
 
+    @property
     def privileges(self):
         gr = self.fetchall("show grants")
         gr.pop(0)
@@ -80,18 +84,18 @@ class LimsDB:
 
         for r in gr:
             for k in r:
-                p = re.compile(r'^GRANT\s(?P<actions>.+?)\sON\s\`(?P<database>[^\`]+)\`\.\`?(?P<table>.+?)\`?\sTO')
+                p = re.compile(r'^GRANT\s(?P<actions>.+?)\sON\s`(?P<database>[^`]+)`.`?(?P<table>.+?)`?\sTO')
                 m = p.search(r[k])
                 md = m.groupdict()
 
-                if ( md ):
+                if md:
 
                     if md['table'] is '*':
                         for table in tables:
                             if table not in privileges:
                                 privileges[table] = {}
 
-                            for action in ( re.split(r'\s*,?\s*', md['actions']) ):
+                            for action in (re.split(r'\s*,?\s*', md['actions'])):
                                 action.strip()
 
                                 if action is '*':
@@ -104,7 +108,7 @@ class LimsDB:
                         if md['table'] not in privileges:
                             privileges[md['table']] = {}
 
-                        for action in ( re.split(r'\s*,?\s*', md['actions']) ):
+                        for action in (re.split(r'\s*,?\s*', md['actions'])):
                             action.strip()
 
                             if action is '*':
@@ -117,6 +121,30 @@ class LimsDB:
                     exit()
 
         return privileges
+
+
+def execute_commands(command_array, wait=True):
+    command_results = []
+
+    for command in command_array:
+
+        update_cgi_log('information', 'staring command: (wait: ' + str(wait) + ') ' + ' '.join(command))
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if wait:
+            update_cgi_log('information', 'waiting for command to complete ...')
+            # process_stdout, process_stderr = p.communicate()
+            while p.poll() is None:
+                print("Still working<br>")
+                sys.stdout.flush()
+                time.sleep(1)
+
+            command_results.append([p.stdout.read().decode("utf-8"), p.stderr.read().decode("utf-8")])
+            update_cgi_log('information', 'command complete')
+        else:
+            command_results.append(['NA', 'NA'])
+
+    return command_results
 
 
 def start_cgi_page(page_title='untitled'):
@@ -134,15 +162,15 @@ def start_cgi_page(page_title='untitled'):
         Data.cgiVars[v] = Data.cgi[v].value
 
     # parse cookies
-    parsedCookies = {}
-    cookiesToSet = cookies.SimpleCookie()
+    parsed_cookies = {}
+    cookies_to_set = cookies.SimpleCookie()
 
     if 'HTTP_COOKIE' in os.environ:
         cookie_list = os.environ['HTTP_COOKIE'].split(';')
 
         for cookie in cookie_list:
             cookie_var, cookie_value = cookie.split('=')
-            parsedCookies[cookie_var.strip()] = cookie_value.replace('"', '').strip()
+            parsed_cookies[cookie_var.strip()] = cookie_value.replace('"', '').strip()
 
     # CGI log
     # Each user will have a log file used primarily for debugging purposes.
@@ -150,8 +178,8 @@ def start_cgi_page(page_title='untitled'):
     # will be created if an existing log file name is not found in the user's cookies.
 
     Data.cgiVars['cgi_log_file'] = ''
-    if 'cgi_log_file' in parsedCookies:
-        Data.cgiVars['cgi_log_file'] = parsedCookies['cgi_log_file']
+    if 'cgi_log_file' in parsed_cookies:
+        Data.cgiVars['cgi_log_file'] = parsed_cookies['cgi_log_file']
     else:
         Data.cgiVars['cgi_log_file'] = "../../logs/cgi/" + create_randomized_id(5) + ".log.html"
 
@@ -163,13 +191,13 @@ def start_cgi_page(page_title='untitled'):
     # If a variable is found in Data.cgiVars but not stored as a cookie then set the cookie
     # If a variable is found in a cookie but not already stored in Data.cgiVars then store the variable in Data.cgiVars
 
-    cookieVariables = ['user_id', 'user_passwd', 'database_name', 'cgi_log_file']
-    for v in cookieVariables:
-        if v in Data.cgiVars and v not in parsedCookies:
-            cookiesToSet[v] = Data.cgiVars[v]
-            cookiesToSet[v]["path"] = "/"
-        elif v in parsedCookies and v not in Data.cgiVars:
-            Data.cgiVars[v] = parsedCookies[v]
+    cookie_variables = ['user_id', 'user_passwd', 'database_name', 'cgi_log_file']
+    for v in cookie_variables:
+        if v in Data.cgiVars and v not in parsed_cookies:
+            cookies_to_set[v] = Data.cgiVars[v]
+            cookies_to_set[v]["path"] = "/"
+        elif v in parsed_cookies and v not in Data.cgiVars:
+            Data.cgiVars[v] = parsed_cookies[v]
         else:
             pass
 
@@ -205,9 +233,8 @@ def start_cgi_page(page_title='untitled'):
     if os.path.isfile('css/all.css'):
         css_code += "<link rel='stylesheet' type='text/css' href='css/all.css'>\n"
 
-
     # Assemble the HTML header
-    sf = {'cookies': cookiesToSet.output().strip(), 'title': page_title, 'js_code': js_code, 'css_code': css_code,
+    sf = {'cookies': cookies_to_set.output().strip(), 'title': page_title, 'js_code': js_code, 'css_code': css_code,
           'image_path': module_file_dir + '/img', 'calling_file': calling_file}
 
     html_header = '''
@@ -291,6 +318,9 @@ def start_cgi_page(page_title='untitled'):
          <tr>
           <td align='right' style='vertical-align:middle; padding: 0px;'>
            {user_id} &nbsp;
+           <a id='HUD_status'>
+             <img src='{image_path}/HUD_search.png' style='vertical-align:middle'>
+           </a>
            <img src='{image_path}/HUD_search.png' style='vertical-align:middle'>
            <img src='{image_path}/HUD_menu.png' style='vertical-align:middle'>
            <a href='{cgi_log_file}'><img src='{image_path}/HUD_log.png' style='vertical-align:middle'></a>
@@ -302,6 +332,7 @@ def start_cgi_page(page_title='untitled'):
         '''.format(**sf)
 
         print("<script>document.getElementById('hud').innerHTML=\"{0}\"</script>\n".format(s.replace("\n", "")))
+        sys.stdout.flush()
 
 
 def end_cgi_page():
@@ -313,13 +344,13 @@ def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits)
 
 
 def create_sequence_digest(sequence):
-    hash = hashlib.sha1()
-    hash.update(sequence.encode('utf-8'))
-    return hash.hexdigest()
+    seq_hash = hashlib.sha1()
+    seq_hash.update(sequence.encode('utf-8'))
+    return seq_hash.hexdigest()
 
 
 def update_cgi_log(update_type, text):
-    ts = strftime("%Y-%m-%d %I:%M%p", gmtime())
+    ts = time.strftime("%Y-%m-%d %I:%M%p", time.gmtime())
 
     # Color code log enteries according to provided update_type
     text_color = '#000000'
