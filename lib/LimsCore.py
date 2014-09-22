@@ -131,7 +131,7 @@ def execute_commands(command_array, wait=True):
 
         if wait:
             update_cgi_log('information', 'waiting for command to complete ...')
-            # process_stdout, process_stderr = p.communicate()
+
             while p.poll() is None:
                 print("Still working<br>")
                 sys.stdout.flush()

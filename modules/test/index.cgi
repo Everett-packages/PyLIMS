@@ -2,11 +2,8 @@
 import sys
 sys.path.append("../../lib")
 import LimsCore
-#import time
-#import subprocess
-#import threading
 from pprintpp import pprint as pp
-#import signal
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 # Start the CGI page
 LimsCore.start_cgi_page()
@@ -42,9 +39,14 @@ print('Configuration variables: ')
 pp(LimsCore.config)
 print('<br><br>')
 
+# BioPython
+
+seq = 'MSWMQNLKNYQHLRDPSEYMSQVYGDPLAYLQETTKFVTEREYYEDFGYGECFNSTESEVQCELITGEFDPKLLPYDKRLAWHFKEFCYKTSAHGIPMIGEAP'
+print('protein sequence: ' + seq + '<br><br>')
+pa = ProteinAnalysis(seq)
+print ("MW: ", "%.2f" % pa.molecular_weight(), '<br><br>' )
 
 # Invoke jackhmmer
-seq = 'MSWMQNLKNYQHLRDPSEYMSQVYGDPLAYLQETTKFVTEREYYEDFGYGECFNSTESEVQCELITGEFDPKLLPYDKRLAWHFKEFCYKTSAHGIPMIGEAP'
 with open('../../logs/cgi/seq.ff', 'w') as ff:
     ff.write(">seq\n{0}".format(seq))
 
