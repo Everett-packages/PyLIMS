@@ -10,8 +10,6 @@ import hashlib
 import string
 import random
 import subprocess
-
-# from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from http import cookies
 
 

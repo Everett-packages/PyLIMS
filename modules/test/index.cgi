@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sys
+
 sys.path.append("../../lib")
 import LimsCore
 from pprintpp import pprint as pp
@@ -13,7 +14,8 @@ LimsCore.update_cgi_log('information', 'update 1')
 
 # Connect to MySQL database
 # Connection credentials are taken form the login form created by start_cgi_page or extracted from existing cookies
-db = LimsCore.LimsDB(LimsCore.Data.cgiVars['user_id'], LimsCore.Data.cgiVars['user_passwd'], LimsCore.Data.cgiVars['database_name'])
+db = LimsCore.LimsDB(LimsCore.Data.cgiVars['user_id'], LimsCore.Data.cgiVars['user_passwd'],
+                     LimsCore.Data.cgiVars['database_name'])
 
 # Determine the privileges that this user has
 privileges = db.privileges
@@ -32,7 +34,7 @@ digest = LimsCore.create_sequence_digest(sequence)
 print("Digest of sequence: ", sequence, " -> ", digest, "<br><br>\n")
 
 # CGI variables
-print ('Data.cgiVars: ', LimsCore.Data.cgiVars, "<br><br>")
+print('Data.cgiVars: ', LimsCore.Data.cgiVars, "<br><br>")
 
 # Configuration variables
 print('Configuration variables: ')
@@ -44,7 +46,7 @@ print('<br><br>')
 seq = 'MSWMQNLKNYQHLRDPSEYMSQVYGDPLAYLQETTKFVTEREYYEDFGYGECFNSTESEVQCELITGEFDPKLLPYDKRLAWHFKEFCYKTSAHGIPMIGEAP'
 print('protein sequence: ' + seq + '<br><br>')
 pa = ProteinAnalysis(seq)
-print ("MW: ", "%.2f" % pa.molecular_weight(), '<br><br>' )
+print("MW: ", "%.2f" % pa.molecular_weight(), '<br><br>')
 
 # Invoke jackhmmer
 with open('../../logs/cgi/seq.ff', 'w') as ff:
@@ -52,14 +54,15 @@ with open('../../logs/cgi/seq.ff', 'w') as ff:
 
 print('Running jackhmmer...<br>')
 
-comm = [ [ LimsCore.config['LIMS']['software']['jackhmmer'], '--tblout', '../../logs/cgi/seq.tbl',
-          '--domtblout', '../../logs/cgi/dom.tbl',  '-E', '1.0', '--incE',  '0.01',
-          '../../logs/cgi/seq.ff', LimsCore.config['LIMS']['databases']['UniProtSwprt']
-       ] ]
+comm = [
+         [ LimsCore.config['LIMS']['software']['jackhmmer'], '--tblout', '../../logs/cgi/seq.tbl',
+           '--domtblout', '../../logs/cgi/dom.tbl', '-E', '1.0', '--incE', '0.01',
+           '../../logs/cgi/seq.ff', LimsCore.config['LIMS']['databases']['UniProtSwprt']
+         ]
+       ]
 
 r = LimsCore.execute_commands(comm)
 print('result (list of lists) [0]->stdout [1]->stderr: <br>')
 pp(r)
-
 
 db.disconnect()
