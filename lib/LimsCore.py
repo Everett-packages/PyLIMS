@@ -11,6 +11,7 @@ import string
 import random
 import subprocess
 from http import cookies
+from pprintpp import pprint as pp
 
 
 class DataClass:
@@ -168,16 +169,20 @@ def start_cgi_page(page_title='untitled'):
             cookie_var, cookie_value = cookie.split('=')
             parsed_cookies[cookie_var.strip()] = cookie_value.replace('"', '').strip()
 
+    # CGI session id
+    # Create a new session id. Use existing session id if found in cookies.
+
+    Data.cgiVars['session_id'] = create_randomized_id(10)
+
+    if 'session_id' in parsed_cookies:
+        Data.cgiVars['session_id'] = parsed_cookies['session_id']
+
     # CGI log
     # Each user will have a log file used primarily for debugging purposes.
     # The name of the log file will be tracked with cookies and a new log file name
     # will be created if an existing log file name is not found in the user's cookies.
 
-    Data.cgiVars['cgi_log_file'] = ''
-    if 'cgi_log_file' in parsed_cookies:
-        Data.cgiVars['cgi_log_file'] = parsed_cookies['cgi_log_file']
-    else:
-        Data.cgiVars['cgi_log_file'] = "../../logs/cgi/" + create_randomized_id(5) + ".log.html"
+    Data.cgiVars['cgi_log_file'] = "../../logs/cgi/" + Data.cgiVars['session_id'] + ".log.html"
 
     # Start the log for this CGI page
 
@@ -187,7 +192,7 @@ def start_cgi_page(page_title='untitled'):
     # If a variable is found in Data.cgiVars but not stored as a cookie then set the cookie
     # If a variable is found in a cookie but not already stored in Data.cgiVars then store the variable in Data.cgiVars
 
-    cookie_variables = ['user_id', 'user_passwd', 'database_name', 'cgi_log_file']
+    cookie_variables = ['user_id', 'user_passwd', 'database_name', 'session_id']
     for v in cookie_variables:
         if v in Data.cgiVars and v not in parsed_cookies:
             cookies_to_set[v] = Data.cgiVars[v]

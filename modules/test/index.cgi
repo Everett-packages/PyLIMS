@@ -18,8 +18,8 @@ db = LimsCore.LimsDB(LimsCore.Data.cgiVars['user_id'], LimsCore.Data.cgiVars['us
                      LimsCore.Data.cgiVars['database_name'])
 
 # Determine the privileges that this user has
-privileges = db.privileges
-print('db privileges', privileges, "<br><br>")
+privileges = db.privileges()
+print('db privileges', pp(privileges), "<br><br>")
 
 # Create random ids
 id = LimsCore.create_randomized_id(25)
