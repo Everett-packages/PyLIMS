@@ -66,7 +66,6 @@ class LimsDB:
         self.cur.close()
         self.conn.close()
 
-    @property
     def privileges(self):
         gr = self.fetchall("show grants")
         gr.pop(0)
@@ -89,7 +88,6 @@ class LimsDB:
                 md = m.groupdict()
 
                 if md:
-
                     if md['table'] is '*':
                         for table in tables:
                             if table not in privileges:
