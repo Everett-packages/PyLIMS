@@ -49,15 +49,17 @@ pa = ProteinAnalysis(seq)
 print("MW: ", "%.2f" % pa.molecular_weight(), '<br><br>')
 
 # Invoke jackhmmer
-with open('../../logs/cgi/seq.ff', 'w') as ff:
-    ff.write(">seq\n{0}".format(seq))
+work_dir = '../../data/tmp_data/' + LimsCore.Data.cgiVars['session_id']
+
+with open(work_dir + '/seq.ff', 'w') as s:
+    s.write(">seq\n{0}".format(seq))
 
 print('Running jackhmmer...<br>')
 
 comm = [
-         [ LimsCore.config['LIMS']['software']['jackhmmer'], '--tblout', '../../logs/cgi/seq.tbl',
-           '--domtblout', '../../logs/cgi/dom.tbl', '-E', '1.0', '--incE', '0.01',
-           '../../logs/cgi/seq.ff', LimsCore.config['LIMS']['databases']['UniProtSwprt']
+         [ LimsCore.config['LIMS']['software']['jackhmmer'], '--tblout', work_dir+'/seq.tbl',
+           '--domtblout', work_dir+'/dom.tbl', '-E', '1.0', '--incE', '0.01',
+           work_dir+'/seq.ff', LimsCore.config['LIMS']['databases']['UniProtSwprt']
          ]
        ]
 

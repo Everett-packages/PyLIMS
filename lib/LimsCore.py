@@ -182,7 +182,10 @@ def start_cgi_page(page_title='untitled'):
     # The name of the log file will be tracked with cookies and a new log file name
     # will be created if an existing log file name is not found in the user's cookies.
 
-    Data.cgiVars['cgi_log_file'] = "../../logs/cgi/" + Data.cgiVars['session_id'] + ".log.html"
+    Data.cgiVars['cgi_log_file'] = "../../data/tmp_data/" + Data.cgiVars['session_id'] + "/cgi.log.html"
+
+    if os.path.isdir("../../data/tmp_data/" + Data.cgiVars['session_id']) is False:
+        os.mkdir("../../data/tmp_data/" + Data.cgiVars['session_id'])
 
     # Start the log for this CGI page
 
