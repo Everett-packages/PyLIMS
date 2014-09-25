@@ -13,9 +13,14 @@ import subprocess
 from http import cookies
 # from pprintpp import pprint as pp
 
-def pf (string):
-    print(string)
+
+def pf(s):
+    """ pf( [string] ) is a short hand function for both printing to stdout and flushing the stdout buffer
+        to ensure that printed text is printed to the browser as soon as possible. """
+
+    print(s)
     sys.stdout.flush()
+
 
 class DataClass:
     cgiVars = {}
@@ -33,7 +38,10 @@ with open('../../config.xml') as x:
 
 
 class LimsDB:
-    # noinspection PyBroadException
+    """ The LimsDB class connects to a MySQL database with the provided credentials, provides a number
+        of methods for interacting with the database and provides additional methods to determine a users
+        level of access to the database. """
+
     def __init__(self, user_id, user_passwd, database_name):
 
         # connect to the database and define a cursor
@@ -67,6 +75,10 @@ class LimsDB:
         self.conn.close()
 
     def privileges(self):
+        """ This method determines which tables the current user can access and the extent of that access.
+            and returns a dict of dicts detailing the users access level, ie. { construct table: { insert: True} }.
+            Developers should create and consult this data object before attempting to work with the database.
+        """
         gr = self.fetchall("show grants")
         gr.pop(0)
 
@@ -77,6 +89,7 @@ class LimsDB:
             for tt in t:
                 tables.append(t[tt])
 
+        # List to translate '*' to select actions.  Certain actions such as DROP are currently not supported.
         all_actions = ['SELECT', 'UPDATE', 'INSERT', 'DELETE']
 
         privileges = {}
@@ -122,6 +135,14 @@ class LimsDB:
 
 
 def execute_commands(command_array, wait=True):
+    """ This function invokes he subprocess.Popen method to run system commands which are provided
+        as a lists of lists, ie.   [ [ 'a.py',  '-f', 'file_name' ], [ 'b.py', '-j', '10' ] ]
+        Commands are executed in the order that they are found in the list of lists and the function
+        will wait for them to conclude and return their results as a list of lists.  The first element
+        of each list will be the stdout output and the second element will be the stderr output from
+        executed commands. Commands will be ran in the background if the optional function paramater 'wait'
+        is set to False and stderr and stdout results will not be returned.
+    """
     command_results = []
 
     pf("<script>HUD_set_status_working()</script>\n")
@@ -145,6 +166,7 @@ def execute_commands(command_array, wait=True):
     pf("<script>HUD_set_status_idle()</script>\n")
 
     return command_results
+
 
 def start_cgi_page(page_title='untitled'):
     import cgitb
@@ -207,7 +229,7 @@ def start_cgi_page(page_title='untitled'):
         else:
             pass
 
-    # Determine the name of the script calling this module and determine if there is a coresponding
+    # Determine the name of the script calling this module and determine if there is a corresponding
     # .js file.  ie.  protein.cgi call this module then check for protein.js
     # If the file exists then add a line to the header to import the js file and then print the HTML header.
     # Do the same for .css files then print the default LIMS header including the relevant js and css code.
@@ -253,8 +275,14 @@ def start_cgi_page(page_title='untitled'):
                            </script>'''.format(js)
 
     # Assemble the HTML header
+    # The Heads Up Display (HUD) icons are loaded after the top of the page is rendered so that that developers
+    # can dynamically change or omitt the icons as needed. There are a number of JS functions in js/all.js available
+    # for manipulating these icons.
+
+    # sf dictionary used to fromat the html header
     sf = {'cookies': cookies_to_set.output().strip(), 'title': page_title, 'js_code': js_code, 'css_code': css_code,
-          'module_file_dir': Data.cgiVars['module_file_dir'], 'calling_file': calling_file, 'js_pylims_obj_code': js_pylims_obj_code}
+          'module_file_dir': Data.cgiVars['module_file_dir'], 'calling_file': calling_file, 'js_pylims_obj_code':
+          js_pylims_obj_code}
 
     html_header = '''
     {cookies}
@@ -335,14 +363,6 @@ def start_cgi_page(page_title='untitled'):
     else:
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header).strip())
-
-        sf['user_id'] = Data.cgiVars['user_id']
-        sf['cgi_log_file'] = Data.cgiVars['cgi_log_file']
-
-        # Update interface header with login info
-        #s = '''\
-        #
-        #'''.format(**sf)
 
         pf("<script>HUD_load_default_buttons()</script>")
 
