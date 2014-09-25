@@ -11,13 +11,14 @@ import string
 import random
 import subprocess
 from http import cookies
-from pprintpp import pprint as pp
+# from pprintpp import pprint as pp
 
+def pf (string):
+    print(string)
+    sys.stdout.flush()
 
 class DataClass:
-    def __init__(self):
-        self.cgiVars = None
-
+    cgiVars = {}
     pass
 
 # Global NameSpace to convey data to the calling module
@@ -123,6 +124,8 @@ class LimsDB:
 def execute_commands(command_array, wait=True):
     command_results = []
 
+    pf("<script>HUD_set_status_working()</script>\n")
+
     for command in command_array:
 
         update_cgi_log('information', 'staring command: (wait: ' + str(wait) + ') ' + ' '.join(command))
@@ -132,17 +135,16 @@ def execute_commands(command_array, wait=True):
             update_cgi_log('information', 'waiting for command to complete ...')
 
             while p.poll() is None:
-                print("Still working<br>")
-                sys.stdout.flush()
                 time.sleep(1)
 
-            command_results.append([p.stdout.read().decode("utf-8"), p.stderr.read().decode("utf-8")])
+            command_results.append([p.stdout.read().decode('UTF-8'), p.stderr.read().decode('UTF-8')])
             update_cgi_log('information', 'command complete')
         else:
             command_results.append(['NA', 'NA'])
 
-    return command_results
+    pf("<script>HUD_set_status_idle()</script>\n")
 
+    return command_results
 
 def start_cgi_page(page_title='untitled'):
     import cgitb
@@ -215,7 +217,7 @@ def start_cgi_page(page_title='untitled'):
     calling_file = m.group(1)
 
     # determine the path of this module
-    module_file_dir = os.path.dirname(__file__)
+    Data.cgiVars['module_file_dir'] = os.path.dirname(__file__)
 
     js_file = re.sub(r'\.\w+$', '.js', inspect.stack()[1][1])
     m = re.search(r'([^/]+)$', js_file, re.M | re.I)
@@ -237,9 +239,22 @@ def start_cgi_page(page_title='untitled'):
     if os.path.isfile('css/all.css'):
         css_code += "<link rel='stylesheet' type='text/css' href='css/all.css'>\n"
 
+    # Create JS code that defines a JS object that stores variables in Data.cgiVars so that JS scripts
+    # can have access this these variables once the Python CGI scripts exit.
+
+    js = ''
+    for v in Data.cgiVars:
+        js += 'pylims.cgiVars.' + v + ' = \'' + Data.cgiVars[v] + '\';\n'
+
+    js_pylims_obj_code = '''<script>
+                              pylims = {{}};
+                              pylims.cgiVars = {{}};
+                              {0}
+                           </script>'''.format(js)
+
     # Assemble the HTML header
     sf = {'cookies': cookies_to_set.output().strip(), 'title': page_title, 'js_code': js_code, 'css_code': css_code,
-          'image_path': module_file_dir + '/img', 'calling_file': calling_file}
+          'module_file_dir': Data.cgiVars['module_file_dir'], 'calling_file': calling_file, 'js_pylims_obj_code': js_pylims_obj_code}
 
     html_header = '''
     {cookies}
@@ -250,16 +265,24 @@ def start_cgi_page(page_title='untitled'):
      <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
      <meta content="utf-8" http-equiv="encoding">
       <title>{title}</title>
+      {js_pylims_obj_code}
+      <script type='text/javascript' src='{module_file_dir}/js/all.js'></script>
       {js_code}
       {css_code}
     </head>
     <body>
     <table style='width:100%; border-collapse: collapse;'>
      <tr>
-      <td style='padding: 0px; width:50px'><img src='{image_path}/pylims1.png' style='height:35px'></td>
+      <td style='padding: 0px; width:50px'><img src='{module_file_dir}/img/pylims1.png' style='height:35px'></td>
       <td align='left' style='padding: 0px; text-align: left '>PyLIMS</td>
-      <td align='right' style='padding: 0px; text-align: right; width:1px'>
-         <div id='hud'></div>
+      <td align='right' style='padding: 0px; text-align: right;>
+         <div id='HUD'>
+           <span id='HUD_search'></span>
+           <span id='HUD_menu'></span>
+           <span id='HUD_log'></span>
+           <span id='HUD_logout'></span>
+           <span id='HUD_status'></span>
+         </div>
       </td>
      </tr>
     </table>
@@ -274,7 +297,7 @@ def start_cgi_page(page_title='untitled'):
             <table style='border-collapse: collapse;'>
              <tr style='vertical-align:top'>
               <td style='padding: 0px; width:50px; text-align: left;'>
-                <img src ='{image_path}/lock1.png' style='height:30px'>
+                <img src ='{module_file_dir}/img/lock1.png' style='height:30px'>
               </td>
               <td style='text-align: left;'>PyLIMS is restricted to registered users.<br>Please sign in.</td>
               <td style='width:10px'></td>
@@ -317,26 +340,11 @@ def start_cgi_page(page_title='untitled'):
         sf['cgi_log_file'] = Data.cgiVars['cgi_log_file']
 
         # Update interface header with login info
-        s = '''\
-        <table style='width:300px; border-collapse: collapse;'>
-         <tr>
-          <td align='right' style='vertical-align:middle; padding: 0px;'>
-           {user_id} &nbsp;
-           <a id='HUD_status'>
-             <img src='{image_path}/HUD_search.png' style='vertical-align:middle'>
-           </a>
-           <img src='{image_path}/HUD_search.png' style='vertical-align:middle'>
-           <img src='{image_path}/HUD_menu.png' style='vertical-align:middle'>
-           <a href='{cgi_log_file}'><img src='{image_path}/HUD_log.png' style='vertical-align:middle'></a>
-           <img src='{image_path}/HUD_help.png' style='vertical-align:middle'>
-           <a onClick='PyLIMS_logout()'><img src='{image_path}/HUD_logout.png' style='vertical-align:middle'></a>
-          </td>
-         </tr>
-        </table>
-        '''.format(**sf)
+        #s = '''\
+        #
+        #'''.format(**sf)
 
-        print("<script>document.getElementById('hud').innerHTML=\"{0}\"</script>\n".format(s.replace("\n", "")))
-        sys.stdout.flush()
+        pf("<script>HUD_load_default_buttons()</script>")
 
 
 def end_cgi_page():
