@@ -138,10 +138,11 @@ def execute_commands(command_array, wait=True):
     """ This function invokes he subprocess.Popen method to run system commands which are provided
         as a lists of lists, ie.   [ [ 'a.py',  '-f', 'file_name' ], [ 'b.py', '-j', '10' ] ]
         Commands are executed in the order that they are found in the list of lists and the function
-        will wait for them to conclude and return their results as a list of lists.  The first element
+        will wait for them to conclude and return their results as a list of lists.   The first element
         of each list will be the stdout output and the second element will be the stderr output from
-        executed commands. Commands will be ran in the background if the optional function paramater 'wait'
-        is set to False and stderr and stdout results will not be returned.
+        executed commands. The HUD status icon will be updated to the 'working' icon until all commands
+        have been executed. Commands will be ran in the background if the optional function parameter 'wait'
+        is set to False and the stderr and stdout results will not be returned.
     """
     command_results = []
 
