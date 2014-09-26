@@ -146,7 +146,7 @@ def execute_commands(command_array, wait=True):
     """
     command_results = []
 
-    pf("<script>HUD_set_status_working()</script>\n")
+    HUD_set_status_working()
 
     for command in command_array:
 
@@ -164,7 +164,7 @@ def execute_commands(command_array, wait=True):
         else:
             command_results.append(['NA', 'NA'])
 
-    pf("<script>HUD_set_status_idle()</script>\n")
+    HUD_set_status_idle()
 
     return command_results
 
@@ -315,7 +315,8 @@ def start_cgi_page(page_title='untitled'):
       </td>
      </tr>
     </table>
-    <hr style='height: 0px; margin: 0px; border-bottom: 1px solid #000000; font-size: 0.5px'><br>
+    <hr style='height: 0px; margin: 0px; border-bottom: 1px solid #000000; font-size: 0.5px'>
+    <div id='overlay10' style='position:absolute;z-index:10;background: rgba(255,255,255,0.9);'></div>
     '''.format(**sf)
 
     # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
@@ -365,8 +366,44 @@ def start_cgi_page(page_title='untitled'):
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header).strip())
 
-        pf("<script>HUD_load_default_buttons()</script>")
+        HUD_load_default_buttons()
 
+
+def HUD_set_status_working():
+    pf("<script>document.getElementById('HUD_status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/HUD_animated_working.gif'>\"</script>\n")
+
+
+def HUD_set_status_idle():
+    pf( "<script>document.getElementById('HUD_status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+        "/img/HUD_status_idle.png'>\"</script>\n")
+
+
+def HUD_load_logout_button():
+    pf("<script>document.getElementById('HUD_logout').innerHTML = \"<a onClick='user_logout()'><img src='" +
+       Data.cgiVars['module_file_dir'] + "/img/HUD_logout.png'></a>\"</script>\n")
+
+
+def HUD_load_log_button():
+    pf("<script>document.getElementById('HUD_log').innerHTML = \"<a href='" + Data.cgiVars['cgi_log_file'] +
+       "'><img src='" +Data.cgiVars['module_file_dir'] + "/img/HUD_CGI_log.png'></a>\"</script>\n")
+
+
+def HUD_load_menu_button():
+    pf("<script>document.getElementById('HUD_menu').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/HUD_menu.png'>\"</script>\n")
+
+
+def HUD_load_search_button():
+    pf("<script>document.getElementById('HUD_search').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/HUD_search.png'>\"</script>\n")
+
+def HUD_load_default_buttons():
+    HUD_set_status_idle()
+    HUD_load_logout_button()
+    HUD_load_log_button()
+    HUD_load_menu_button()
+    HUD_load_search_button()
 
 def end_cgi_page():
     print('</body></html>')
