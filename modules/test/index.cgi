@@ -69,8 +69,8 @@ r = LimsCore.execute_commands(comm)
 print('result (list of lists) [0]->stdout [1]->stderr: <br>')
 pp(r)
 
-print("<script>document.getElementById('overlay10').style.width='100%'; "
-      "document.getElementById('overlay10').style.height='100%'</script>")
-print("<script>document.getElementById('overlay10').innerHTML = 'This is overlay10'</script>")
+#print("<script>document.getElementById('overlay10').style.width='100%'; "
+#      "document.getElementById('overlay10').style.height='100%'</script>")
+#print("<script>document.getElementById('overlay10').innerHTML = 'This is overlay10'</script>")
 
 db.disconnect()
