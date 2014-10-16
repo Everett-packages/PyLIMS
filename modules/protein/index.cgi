@@ -15,7 +15,7 @@ db = LimsCore.LimsDB(LimsCore.Data.cgiVars['user_id'], LimsCore.Data.cgiVars['us
 # Determine the privileges that this user has
 privileges = db.privileges()
 
-# determine the name of the script calling this script
+# determine the name of this script
 m = re.search(r'([^/]+)$', __file__)
 script_file_name = m.group(1)
 
