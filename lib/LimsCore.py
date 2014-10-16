@@ -231,7 +231,7 @@ def start_cgi_page(page_title='untitled'):
             pass
 
     # Determine the name of the script calling this module and determine if there is a corresponding
-    # .js file.  ie.  protein.cgi call this module then check for protein.js
+    # .js file.  ie.  protein.cgi call this module then check for index.js
     # If the file exists then add a line to the header to import the js file and then print the HTML header.
     # Do the same for .css files then print the default LIMS header including the relevant js and css code.
 

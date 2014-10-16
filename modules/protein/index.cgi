@@ -25,7 +25,7 @@ def main():
 
 
 def cgi_actions():
-    if ( 'action' in LimsCore.Data.cgiVars ):
+    if 'action' in LimsCore.Data.cgiVars:
         if LimsCore.Data.cgiVars['action'] in globals():
             # noinspection PyCallingNonCallable
             globals()[LimsCore.Data.cgiVars['action']]()
@@ -45,7 +45,20 @@ def create_protein_record():
     Enter DNA sequence encoding targeted protein sequence:<br>
     <form accept-charset="UTF-8" action="{0}" method="post">
     <textarea name='protein_nt_sequence' style='width:500px;height:100px;padding:2px;font-family: arial; font-size:10pt'>
-
+    </textarea>
+    <br>
+    <br>
+    DNA annotation.<br>
+    Database name:
+    <select id='dna_sequence_database' onChange="database_change('dna_sequence_database', 'dna_database_id')")>
+       <option value='designed sequence' selected>designed sequence</option>
+       <option value='GenBank'>GenBank</option>
+       <option value='NCBI Gene'>NCBI Gene</option>
+    </select> &nbsp; &nbsp;
+    <span id='dna_database_id' style='visibility:hidden'>
+     Database id: <input name='dna_sequence_database_id' type='text' style='width:100px'>
+    </span>
+    <script>database_change('dna_sequence_database', 'dna_database_id')</script>
     '''.format(script_file_name)
 
     print(html)
