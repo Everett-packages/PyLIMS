@@ -4,7 +4,7 @@ import sys
 sys.path.append("../../lib")
 import LimsCore
 from pprintpp import pprint as pp
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
+ormrom Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 # Start the CGI page
 LimsCore.start_cgi_page()

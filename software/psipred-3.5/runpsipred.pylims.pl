@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-my $dbname = "/home/everett/Projects/PyLIMS/data/system_data/databases/UniProt/sprot.compact_headers";
+my $dbname = "/media/VirtualDisk1/UniRef90/uniref90.ff.pfilt";
 my $ncbidir = "/home/everett/Projects/PyLIMS/software/blast-2.2.26/bin";
 my $execdir = "/home/everett/Projects/PyLIMS/software/psipred-3.5/bin";
 my $datadir = "/home/everett/Projects/PyLIMS/software/psipred-3.5/data";
