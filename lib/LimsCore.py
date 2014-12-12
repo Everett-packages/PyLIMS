@@ -280,6 +280,7 @@ def start_cgi_page(page_title='untitled'):
     # can dynamically change or omitt the icons as needed. There are a number of JS functions in js/all.js available
     # for manipulating these icons.
 
+    # read menu html from local file
     with open (Data.cgiVars['module_file_dir'] + '/' + 'html/menu1.html' , "r") as myfile:
         menu_html = myfile.read().replace('\n', '')
 
