@@ -280,10 +280,13 @@ def start_cgi_page(page_title='untitled'):
     # can dynamically change or omitt the icons as needed. There are a number of JS functions in js/all.js available
     # for manipulating these icons.
 
-    # sf dictionary used to fromat the html header
+    with open (Data.cgiVars['module_file_dir'] + '/' + 'html/menu1.html' , "r") as myfile:
+        menu_html = myfile.read().replace('\n', '')
+
+    # sf dictionary used to format the html header
     sf = {'cookies': cookies_to_set.output().strip(), 'title': page_title, 'js_code': js_code, 'css_code': css_code,
           'module_file_dir': Data.cgiVars['module_file_dir'], 'calling_file': calling_file, 'js_pylims_obj_code':
-          js_pylims_obj_code}
+          js_pylims_obj_code, 'main_menu_html': menu_html}
 
     html_header = '''
     {cookies}
@@ -304,7 +307,7 @@ def start_cgi_page(page_title='untitled'):
      <tr>
       <td style='padding: 0px; width:50px'><img src='{module_file_dir}/img/pylims1.png' style='height:35px'></td>
       <td align='left' style='padding: 0px; text-align: left '>PyLIMS</td>
-      <td align='right' style='padding: 0px; text-align: right;>
+      <td align='right' style='padding: 0px; text-align: right'>
          <div id='HUD'>
            <span id='HUD_search'></span>
            <span id='HUD_menu'></span>
@@ -316,10 +319,10 @@ def start_cgi_page(page_title='untitled'):
      </tr>
     </table>
     <hr style='height: 0px; margin: 0px; border-bottom: 1px solid #000000; font-size: 0.5px'>
-    <div id='overlay10' style='position:absolute;z-index:10;background: rgba(255,255,255,0.9);'></div>
+    <div id='menu_overlay' style='position:absolute;width:100%;height:100%;z-index:10;background: rgba(255,255,255,0.9);visibility:hidden'>{main_menu_html}</div>
     '''.format(**sf)
 
-    # Present the login screen if the user can not be identified from LIMS cookies or a login attempt   
+    # Present the login screen if the user can not be identified from LIMS cookies or a login attempt
 
     if 'user_id' not in Data.cgiVars:
         s = '''\
@@ -349,9 +352,11 @@ def start_cgi_page(page_title='untitled'):
                     <td style='width:10px'></td>
                     <td><input type='text' name='database_name'></td>
                    </tr>
-                   <tr style='vertical-align:top'><td><input type='submit' value='log in'></td></tr>
+                   <tr style='vertical-align:top'>
+                     <td><input type='submit' value='log in'></td>
+                   </tr>
                   </table>
-                  <input type='hidden' name='action' value='verify_user_login'>
+
                 </form>
               </td>
              </tr>
@@ -391,7 +396,7 @@ def HUD_load_log_button():
 
 def HUD_load_menu_button():
     pf("<script>document.getElementById('HUD_menu').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/HUD_menu.png'>\"</script>\n")
+       "/img/HUD_menu.png' onClick='show_main_menu()'>\"</script>\n")
 
 
 def HUD_load_search_button():

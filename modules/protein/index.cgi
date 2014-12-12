@@ -34,9 +34,12 @@ def cgi_actions():
                   .format(LimsCore.Data.cgiVars['action']))
             exit()
     else:
-        print("Error: CGI variable 'action' not defined.")
+        # Default action code ...
+        print("Error: This module required that the CGI variable 'action' be defined.")
         exit()
 
+def submit_create_protein_record_request():
+    pass
 
 def create_protein_record():
 
@@ -44,7 +47,7 @@ def create_protein_record():
     <br>
     Enter DNA sequence encoding targeted protein sequence:<br>
     <form accept-charset="UTF-8" action="{0}" method="post">
-    <textarea name='protein_nt_sequence' style='width:500px;height:100px;padding:2px;font-family: arial; font-size:10pt'>
+    <textarea name='protein_nt_sequence' style='width:500px;height:100px;padding:2px;font-family:arial;font-size:10pt'>
     </textarea>
     <br>
     <br>
@@ -57,8 +60,25 @@ def create_protein_record():
     </select> &nbsp; &nbsp;
     <span id='dna_database_id' style='visibility:hidden'>
      Database id: <input name='dna_sequence_database_id' type='text' style='width:100px'>
-    </span>
+    </span><br>
     <script>database_change('dna_sequence_database', 'dna_database_id')</script>
+    <br>
+    Protein annotation.<br>
+    Database name:
+    <select id='protein_sequence_database' onChange="database_change('protein_sequence_database', 'protein_database_id')")>
+       <option value='designed sequence' selected>designed sequence</option>
+       <option value='UniProt'>UniProt</option>
+    </select> &nbsp; &nbsp;
+    <span id='protein_database_id' style='visibility:hidden'>
+     Database id: <input name='protein_sequence_database_id' type='text' style='width:100px'>
+    </span>
+    <br>
+    <br>
+    <input type='hidden' name='action' value='submit_create_protein_record_request'>
+    <input type='submit' value='create record'>
+    </form>
+    <script>database_change('protein_sequence_database', 'protein_database_id')</script>
+
     '''.format(script_file_name)
 
     print(html)
