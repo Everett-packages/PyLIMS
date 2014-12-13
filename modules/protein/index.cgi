@@ -3,6 +3,9 @@ import sys
 sys.path.append("../../lib")
 import LimsCore
 import re
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
+from pprintpp import pprint as pp
 
 # Start the CGI page
 LimsCore.start_cgi_page()
@@ -39,7 +42,23 @@ def cgi_actions():
         exit()
 
 def submit_create_protein_record_request():
-    pass
+    LimsCore.Data.cgiVars['protein_nt_sequence'] = ''.join(LimsCore.Data.cgiVars['protein_nt_sequence'].split())
+    LimsCore.Data.cgiVars['protein_nt_sequence'] = LimsCore.Data.cgiVars['protein_nt_sequence'].upper()
+
+    protein_nt_sequence = Seq(LimsCore.Data.cgiVars['protein_nt_sequence'], IUPAC.unambiguous_dna)
+
+    try:
+        protein_aa_sequence = protein_nt_sequence.translate()
+    except:
+        print("Error: the provided DNA sequence could not be translated.")
+        exit()
+
+    # remove terminal stop codons from both the translated DNA sequences and the provided DNA sequence
+
+    m = re.search(r'[\*]+$', str(protein_aa_sequence))
+    if m:
+        print('group: '+m.group(0))
+
 
 def create_protein_record():
 
