@@ -54,11 +54,18 @@ def submit_create_protein_record_request():
         exit()
 
     # remove terminal stop codons from both the translated DNA sequences and the provided DNA sequence
-
-    m = re.search(r'[\*]+$', str(protein_aa_sequence))
+    m = re.search('([\*]+)$', str(protein_aa_sequence))
     if m:
-        print('group: '+m.group(0))
+        protein_nt_sequence = protein_nt_sequence[:-3*len(m.group(0))]
+        protein_aa_sequence = protein_aa_sequence[:-len(m.group(0))]
 
+    # test for internal stop codons
+    m = re.search('\*', str(protein_aa_sequence))
+    if m:
+        print("Error. The translated DNA sequence contains an internal stop codon.")
+        exit()
+
+    sequence_digest = LimsCore.create_sequence_digest()
 
 def create_protein_record():
 
