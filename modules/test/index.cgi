@@ -69,6 +69,7 @@ r = LimsCore.execute_commands(comm)
 print('result (list of lists) [0]->stdout [1]->stderr: <br>')
 pp(r)
 
+# AAA
 
 
 db.disconnect()
