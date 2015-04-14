@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 import sys
 
 sys.path.append("../../lib")
@@ -19,7 +19,9 @@ db = LimsCore.LimsDB(LimsCore.Data.cgiVars['user_id'], LimsCore.Data.cgiVars['us
 
 # Determine the privileges that this user has
 privileges = db.privileges()
-print('db privileges', pp(privileges), "<br><br>")
+print('db privileges :: ', privileges, "<br><br>")
+#pp(privileges)
+#print("<br><br>")
 
 # Create random ids
 id = LimsCore.create_randomized_id(25)

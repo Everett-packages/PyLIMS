@@ -5,8 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/lib" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cgi" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.4.0 (/usr/bin/python3)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.4.3 (/usr/local/Python/Python-3.4.3/bin/python3.4)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
-
