@@ -24,19 +24,6 @@ m = re.search(r'([^/]+)$', __file__)
 script_file_name = m.group(1)
 
 
-def cgi_actions():
-    if 'action' in LimsCGI.Data.cgiVars:
-        if LimsCGI.Data.cgiVars['action'] in globals():
-            globals()[LimsCGI.Data.cgiVars['action']]()
-        else:
-            print("Error: CGI action variable '{0}' does not map to a PyLIMS function."
-                  .format(LimsCGI.Data.cgiVars['action']))
-            exit()
-    else:
-        # Default action code ...
-        print("Error: This module required that the CGI variable 'action' be defined.")
-        exit()
-
 def submit_create_protein_record_request():
     LimsCGI.Data.cgiVars['protein_nt_sequence'] = ''.join(LimsCGI.Data.cgiVars['protein_nt_sequence'].split())
     LimsCGI.Data.cgiVars['protein_nt_sequence'] = LimsCGI.Data.cgiVars['protein_nt_sequence'].upper()
@@ -63,6 +50,7 @@ def submit_create_protein_record_request():
         exit()
 
     sequence_digest = LimsTools.create_sequence_digest(protein_aa_sequence)
+
 
 def create_protein_record():
 
@@ -105,6 +93,19 @@ def create_protein_record():
     '''.format(script_file_name)
 
     print(html)
+
+def cgi_actions():
+    if 'action' in LimsCGI.Data.cgiVars:
+        if LimsCGI.Data.cgiVars['action'] in globals():
+            globals()[LimsCGI.Data.cgiVars['action']]()
+        else:
+            print("Error: CGI action variable '{0}' does not map to a PyLIMS function."
+                  .format(LimsCGI.Data.cgiVars['action']))
+            exit()
+    else:
+        # Default action code ...
+        print("Error: This module required that the CGI variable 'action' be defined.")
+        exit()
 
 cgi_actions()
 
