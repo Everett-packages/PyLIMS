@@ -1,19 +1,20 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 import sys
 sys.path.append("../../lib")
-import LimsCore
+import LimsCGI
+import LimsDB
+import LimsTools
 import re
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
-from pprintpp import pprint as pp
 
 # Start the CGI page
-LimsCore.start_cgi_page()
+LimsCGI.start_cgi_page()
 
 # Connect to MySQL database
 # Connection credentials are taken form the login form created by start_cgi_page or extracted from existing cookies
-db = LimsCore.LimsDB(LimsCore.Data.cgiVars['user_id'], LimsCore.Data.cgiVars['user_passwd'],
-                     LimsCore.Data.cgiVars['database_name'])
+db = LimsDB.DB(LimsCGI.Data.cgiVars['user_id'], LimsCGI.Data.cgiVars['user_passwd'],
+               LimsCGI.Data.cgiVars['database_name'])
 
 # Determine the privileges that this user has
 privileges = db.privileges()
@@ -23,18 +24,13 @@ m = re.search(r'([^/]+)$', __file__)
 script_file_name = m.group(1)
 
 
-def main():
-    cgi_actions()
-
-
 def cgi_actions():
-    if 'action' in LimsCore.Data.cgiVars:
-        if LimsCore.Data.cgiVars['action'] in globals():
-            # noinspection PyCallingNonCallable
-            globals()[LimsCore.Data.cgiVars['action']]()
+    if 'action' in LimsCGI.Data.cgiVars:
+        if LimsCGI.Data.cgiVars['action'] in globals():
+            globals()[LimsCGI.Data.cgiVars['action']]()
         else:
             print("Error: CGI action variable '{0}' does not map to a PyLIMS function."
-                  .format(LimsCore.Data.cgiVars['action']))
+                  .format(LimsCGI.Data.cgiVars['action']))
             exit()
     else:
         # Default action code ...
@@ -42,11 +38,12 @@ def cgi_actions():
         exit()
 
 def submit_create_protein_record_request():
-    LimsCore.Data.cgiVars['protein_nt_sequence'] = ''.join(LimsCore.Data.cgiVars['protein_nt_sequence'].split())
-    LimsCore.Data.cgiVars['protein_nt_sequence'] = LimsCore.Data.cgiVars['protein_nt_sequence'].upper()
+    LimsCGI.Data.cgiVars['protein_nt_sequence'] = ''.join(LimsCGI.Data.cgiVars['protein_nt_sequence'].split())
+    LimsCGI.Data.cgiVars['protein_nt_sequence'] = LimsCGI.Data.cgiVars['protein_nt_sequence'].upper()
 
-    protein_nt_sequence = Seq(LimsCore.Data.cgiVars['protein_nt_sequence'], IUPAC.unambiguous_dna)
+    protein_nt_sequence = Seq(LimsCGI.Data.cgiVars['protein_nt_sequence'], IUPAC.unambiguous_dna)
 
+    protein_aa_sequence = ''
     try:
         protein_aa_sequence = protein_nt_sequence.translate()
     except:
@@ -65,7 +62,7 @@ def submit_create_protein_record_request():
         print("Error. The translated DNA sequence contains an internal stop codon.")
         exit()
 
-    sequence_digest = LimsCore.create_sequence_digest()
+    sequence_digest = LimsTools.create_sequence_digest(protein_aa_sequence)
 
 def create_protein_record():
 
@@ -109,6 +106,6 @@ def create_protein_record():
 
     print(html)
 
-main()
+cgi_actions()
 
 exit()
