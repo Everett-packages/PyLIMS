@@ -1,26 +1,13 @@
+from LimsTools import create_randomized_id, pf
 import textwrap
 import os
+import re
 import sys
 import inspect
-import re
-import xmltodict
+import cgitb
+import cgi
 import time
-import pymysql
-import hashlib
-import string
-import random
-import subprocess
 from http import cookies
-# from pprintpp import pprint as pp
-
-
-def pf(s):
-    """ pf( [string] ) is a short hand function for both printing to stdout and flushing the stdout buffer
-        to ensure that printed text is printed to the browser as soon as possible. """
-
-    print(s)
-    sys.stdout.flush()
-
 
 class DataClass:
     cgiVars = {}
@@ -29,149 +16,7 @@ class DataClass:
 # Global NameSpace to convey data to the calling module
 Data = DataClass()
 
-# read in config xml and convert xml to an object
-# ie.  config['LIMS']['software']['blast'] = path to local blast installation
-
-with open('../../config.xml') as x:
-    xml = x.read()
-    config = xmltodict.parse(xml)
-
-
-class LimsDB:
-    """ The LimsDB class connects to a MySQL database with the provided credentials, provides a number
-        of methods for interacting with the database and provides additional methods to determine a users
-        level of access to the database. """
-
-    def __init__(self, user_id, user_passwd, database_name):
-
-        # connect to the database and define a cursor
-        connection_credentials = {'user': user_id, 'passwd': user_passwd, 'host': 'localhost', 'port': 3306,
-                                  'db': database_name}
-
-        try:
-            self.conn = pymysql.connect(**connection_credentials)
-            self.cur = self.conn.cursor(pymysql.cursors.DictCursor)
-        except:
-            error_msg = "Error.<br>Could not connect to the database '{0}' using user id '{1}' with password '{2}'". \
-                format(database_name, user_id, user_passwd)
-            print(error_msg)
-            exit()
-
-    def fetchone(self, query):
-        self.cur.execute(query)
-        row = self.cur.fetchone()
-        return row
-
-    def fetchall(self, query):
-        self.cur.execute(query)
-        rows = self.cur.fetchall()
-        r = []
-        for row in rows:
-            r.append(row)
-        return r
-
-    def disconnect(self):
-        self.cur.close()
-        self.conn.close()
-
-    def privileges(self):
-        """ This method determines which tables the current user can access and the extent of that access.
-            and returns a dict of dicts detailing the users access level, ie. { construct table: { insert: True} }.
-            Developers should create and consult this data object before attempting to work with the database.
-        """
-        gr = self.fetchall("show grants")
-        gr.pop(0)
-
-        tr = self.fetchall("show tables")
-
-        tables = []
-        for t in tr:
-            for tt in t:
-                tables.append(t[tt])
-
-        # List to translate '*' to select actions.  Certain actions such as DROP are currently not supported.
-        all_actions = ['SELECT', 'UPDATE', 'INSERT', 'DELETE']
-
-        privileges = {}
-
-        for r in gr:
-            for k in r:
-                p = re.compile(r'^GRANT\s(?P<actions>.+?)\sON\s`(?P<database>[^`]+)`.`?(?P<table>.+?)`?\sTO')
-                m = p.search(r[k])
-                md = m.groupdict()
-
-                if md:
-                    if md['table'] is '*':
-                        for table in tables:
-                            if table not in privileges:
-                                privileges[table] = {}
-
-                            for action in (re.split(r'\s*,?\s*', md['actions'])):
-                                action.strip()
-
-                                if action is '*':
-                                    for a in all_actions:
-                                        privileges[table][a] = True
-                                else:
-                                    privileges[table][action] = True
-
-                    else:
-                        if md['table'] not in privileges:
-                            privileges[md['table']] = {}
-
-                        for action in (re.split(r'\s*,?\s*', md['actions'])):
-                            action.strip()
-
-                            if action is '*':
-                                for a in all_actions:
-                                    privileges[md['table']][a] = True
-                            else:
-                                privileges[md['table']][action] = True
-                else:
-                    print("Error, can not parse MySQL privileges")
-                    exit()
-
-        return privileges
-
-
-def execute_commands(command_array, wait=True):
-    """ This function invokes he subprocess.Popen method to run system commands which are provided
-        as a lists of lists, ie.   [ [ 'a.py',  '-f', 'file_name' ], [ 'b.py', '-j', '10' ] ]
-        Commands are executed in the order that they are found in the list of lists and the function
-        will wait for them to conclude and return their results as a list of lists.   The first element
-        of each list will be the stdout output and the second element will be the stderr output from
-        executed commands. The HUD status icon will be updated to the 'working' icon until all commands
-        have been executed. Commands will be ran in the background if the optional function parameter 'wait'
-        is set to False and the stderr and stdout results will not be returned.
-    """
-    command_results = []
-
-    HUD_set_status_working()
-
-    for command in command_array:
-
-        update_cgi_log('information', 'staring command: (wait: ' + str(wait) + ') ' + ' '.join(command))
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        if wait:
-            update_cgi_log('information', 'waiting for command to complete ...')
-
-            while p.poll() is None:
-                time.sleep(1)
-
-            command_results.append([p.stdout.read().decode('UTF-8'), p.stderr.read().decode('UTF-8')])
-            update_cgi_log('information', 'command complete')
-        else:
-            command_results.append(['NA', 'NA'])
-
-    HUD_set_status_idle()
-
-    return command_results
-
-
 def start_cgi_page(page_title='untitled'):
-    import cgitb
-    import cgi
 
     cgitb.enable(display=1, logdir="tmp")
 
@@ -310,11 +155,11 @@ def start_cgi_page(page_title='untitled'):
       <td align='left' style='padding: 0px; text-align: left '>PyLIMS</td>
       <td align='right' style='padding: 0px; text-align: right'>
          <div id='HUD'>
-           <span id='HUD_search'></span>
-           <span id='HUD_menu'></span>
-           <span id='HUD_log'></span>
-           <span id='HUD_logout'></span>
-           <span id='HUD_status'></span>
+           <span id='search'></span>
+           <span id='menu'></span>
+           <span id='log'></span>
+           <span id='logout'></span>
+           <span id='status'></span>
          </div>
       </td>
      </tr>
@@ -372,58 +217,44 @@ def start_cgi_page(page_title='untitled'):
         # User successfully logged in via cookie
         print(textwrap.dedent(html_header).strip())
 
-        HUD_load_default_buttons()
+        load_default_buttons()
+
+def set_status_working():
+    pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/animated_working.gif'>\"</script>\n")
 
 
-def HUD_set_status_working():
-    pf("<script>document.getElementById('HUD_status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/HUD_animated_working.gif'>\"</script>\n")
+def set_status_idle():
+    pf( "<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+        "/img/status_idle.png'>\"</script>\n")
 
 
-def HUD_set_status_idle():
-    pf( "<script>document.getElementById('HUD_status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-        "/img/HUD_status_idle.png'>\"</script>\n")
+def load_logout_button():
+    pf("<script>document.getElementById('logout').innerHTML = \"<a onClick='user_logout()'><img src='" +
+       Data.cgiVars['module_file_dir'] + "/img/logout.png'></a>\"</script>\n")
 
 
-def HUD_load_logout_button():
-    pf("<script>document.getElementById('HUD_logout').innerHTML = \"<a onClick='user_logout()'><img src='" +
-       Data.cgiVars['module_file_dir'] + "/img/HUD_logout.png'></a>\"</script>\n")
+def load_log_button():
+    pf("<script>document.getElementById('log').innerHTML = \"<a href='" + Data.cgiVars['cgi_log_file'] +
+       "'><img src='" +Data.cgiVars['module_file_dir'] + "/img/CGI_log.png'></a>\"</script>\n")
 
+def load_menu_button():
+    pf("<script>document.getElementById('menu').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/menu.png' onClick='show_main_menu()'>\"</script>\n")
 
-def HUD_load_log_button():
-    pf("<script>document.getElementById('HUD_log').innerHTML = \"<a href='" + Data.cgiVars['cgi_log_file'] +
-       "'><img src='" +Data.cgiVars['module_file_dir'] + "/img/HUD_CGI_log.png'></a>\"</script>\n")
+def load_search_button():
+    pf("<script>document.getElementById('search').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/search.png'>\"</script>\n")
 
-
-def HUD_load_menu_button():
-    pf("<script>document.getElementById('HUD_menu').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/HUD_menu.png' onClick='show_main_menu()'>\"</script>\n")
-
-
-def HUD_load_search_button():
-    pf("<script>document.getElementById('HUD_search').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/HUD_search.png'>\"</script>\n")
-
-def HUD_load_default_buttons():
-    HUD_set_status_idle()
-    HUD_load_logout_button()
-    HUD_load_log_button()
-    HUD_load_menu_button()
-    HUD_load_search_button()
+def load_default_buttons():
+    set_status_idle()
+    load_logout_button()
+    load_log_button()
+    load_menu_button()
+    load_search_button()
 
 def end_cgi_page():
     print('</body></html>')
-
-
-def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
-    return "".join(random.choice(chars) for _ in range(length))
-
-
-def create_sequence_digest(sequence):
-    seq_hash = hashlib.sha1()
-    seq_hash.update(sequence.encode('utf-8'))
-    return seq_hash.hexdigest()
-
 
 def update_cgi_log(update_type, text):
     ts = time.strftime("%Y-%m-%d %I:%M%p", time.gmtime())
