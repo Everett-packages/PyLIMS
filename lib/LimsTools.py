@@ -5,14 +5,17 @@ import random
 import subprocess
 import time
 import xmltodict
+import re
 
 def create_randomized_id(length=5, chars=string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(length))
+
 
 def create_sequence_digest(sequence):
     seq_hash = hashlib.sha1()
     seq_hash.update(sequence.encode('utf-8'))
     return seq_hash.hexdigest()
+
 
 def pf(s):
     """ pf( [string] ) is a short hand function for both printing to stdout and flushing the stdout buffer
@@ -21,11 +24,30 @@ def pf(s):
     print(s)
     sys.stdout.flush()
 
+
 def config_data():
     with open('../../config.xml') as x:
         xml = x.read()
     config = xmltodict.parse(xml)
     return config
+
+def next_record_id(db, table, id):
+    record_prefixes = {}
+    record_prefixes['DNA'] = 'PRO'
+    record_prefixes['PROTEIN'] = 'PRO'
+    record_prefixes['EXPRESSION'] = 'EXP'
+    record_prefixes['PURIFICATION'] = 'PUR'
+    record_prefixes['HSQC'] = 'HSQC'
+    record_prefixes['NMR'] = 'NMR'
+
+    numbers = [0]
+    for r in db.fetchall("select {0} from {1}".format(id, table)):
+        m = re.search(r'(\d+)$', r[id], re.M | re.I)
+        if m:
+            numbers.append(int(float(m.group(1))))
+    numbers = sorted(numbers)
+
+    return record_prefixes[table.upper()] + "-{0:010d}".format(numbers.pop() + 1)
 
 def execute_commands(command_array, wait=True):
     """ This function invokes he subprocess.Popen method to run system commands which are provided

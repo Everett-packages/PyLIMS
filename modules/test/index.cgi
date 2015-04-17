@@ -22,6 +22,10 @@ db = LimsDB.DB(LimsCGI.Data.cgiVars['user_id'], LimsCGI.Data.cgiVars['user_passw
 privileges = db.privileges()
 print('db privileges :: ', privileges, "<br><br>")
 
+# Next record id
+next_protein_id = LimsTools.next_record_id(db, 'protein', 'protein_id')
+print('Next protein record id: ', next_protein_id, '<br><br>')
+
 # Create random ids
 id = LimsTools.create_randomized_id(25)
 print("Random id (25 char): ", id, "<br>")

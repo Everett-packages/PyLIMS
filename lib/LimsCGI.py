@@ -9,6 +9,7 @@ import cgi
 import time
 from http import cookies
 
+
 class DataClass:
     cgiVars = {}
     pass
@@ -126,7 +127,7 @@ def start_cgi_page(page_title='untitled'):
     # for manipulating these icons.
 
     # read menu html from local file
-    with open (Data.cgiVars['module_file_dir'] + '/' + 'html/menu1.html' , "r") as myfile:
+    with open(Data.cgiVars['module_file_dir'] + '/' + 'html/menu1.html', "r") as myfile:
         menu_html = myfile.read().replace('\n', '')
 
     # sf dictionary used to format the html header
@@ -219,13 +220,14 @@ def start_cgi_page(page_title='untitled'):
 
         load_default_buttons()
 
+
 def set_status_working():
     pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
        "/img/animated_working.gif'>\"</script>\n")
 
 
 def set_status_idle():
-    pf( "<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+    pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
         "/img/status_idle.png'>\"</script>\n")
 
 
@@ -236,15 +238,18 @@ def load_logout_button():
 
 def load_log_button():
     pf("<script>document.getElementById('log').innerHTML = \"<a href='" + Data.cgiVars['cgi_log_file'] +
-       "'><img src='" +Data.cgiVars['module_file_dir'] + "/img/CGI_log.png'></a>\"</script>\n")
+       "'><img src='" + Data.cgiVars['module_file_dir'] + "/img/CGI_log.png'></a>\"</script>\n")
+
 
 def load_menu_button():
     pf("<script>document.getElementById('menu').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
        "/img/menu.png' onClick='show_main_menu()'>\"</script>\n")
 
+
 def load_search_button():
     pf("<script>document.getElementById('search').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
        "/img/search.png'>\"</script>\n")
+
 
 def load_default_buttons():
     set_status_idle()
@@ -253,8 +258,10 @@ def load_default_buttons():
     load_menu_button()
     load_search_button()
 
+
 def end_cgi_page():
     print('</body></html>')
+
 
 def update_cgi_log(update_type, text):
     ts = time.strftime("%Y-%m-%d %I:%M%p", time.gmtime())

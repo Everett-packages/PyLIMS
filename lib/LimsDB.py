@@ -1,6 +1,7 @@
 import pymysql
 import re
 
+
 class DB:
     """ The DB class connects to a MySQL database with the provided credentials, provides a number
         of methods for interacting with the database and provides additional methods to determine a users
@@ -10,8 +11,7 @@ class DB:
 
         # connect to the database and define a cursor
         connection_credentials = {'user': user_id, 'passwd': user_passwd, 'host': 'localhost', 'port': 3306,
-                                  'db': database_name}
-
+                                  'db': database_name, 'autocommit': True}
         try:
             self.conn = pymysql.connect(**connection_credentials)
             self.cur = self.conn.cursor(pymysql.cursors.DictCursor)
@@ -20,6 +20,23 @@ class DB:
                 format(database_name, user_id, user_passwd)
             print(error_msg)
             exit()
+
+    def execute(self, query):
+        try:
+            self.cur.execute(query)
+
+        except self.cur.Error as e:
+            try:
+                print("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
+            except IndexError:
+                print("MySQL Error: %s" % str(e))
+        exit()
+        return
+
+    def fetchvalue(self, query):
+        self.cur.execute(query)
+        row = self.cur.fetchone()
+        return row[row.keys()[0]]
 
     def fetchone(self, query):
         self.cur.execute(query)
@@ -63,6 +80,9 @@ class DB:
                 p = re.compile(r'^GRANT\s(?P<actions>.+?)\sON\s`(?P<database>[^`]+)`.`?(?P<table>.+?)`?\sTO')
                 m = p.search(r[k])
                 md = m.groupdict()
+
+                if md['actions'] == "ALL PRIVILEGES":
+                    md['actions'] = ', '.join(all_actions)
 
                 if md:
                     if md['table'] is '*':
