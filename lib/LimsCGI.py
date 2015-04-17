@@ -152,20 +152,18 @@ def start_cgi_page(page_title='untitled'):
     <body>
     <table style='width:100%; border-collapse: collapse;'>
      <tr>
-      <td style='padding: 0px; width:50px'><img src='{module_file_dir}/img/pylims1.png' style='height:35px'></td>
-      <td align='left' style='padding: 0px; text-align: left '>PyLIMS</td>
+      <td style='padding: 0px; width:50px'><img src='{module_file_dir}/img/header_pylims_title.png'></td>
+      <td align='left' style='padding: 0px; text-align: left '></td>
       <td align='right' style='padding: 0px; text-align: right'>
-         <div id='HUD'>
            <span id='search'></span>
            <span id='menu'></span>
            <span id='log'></span>
            <span id='logout'></span>
            <span id='status'></span>
-         </div>
       </td>
      </tr>
     </table>
-    <hr style='height: 0px; margin: 0px; border-bottom: 1px solid #000000; font-size: 0.5px'>
+    <hr style='height: 0px; margin: 0px; border-bottom: 1px solid #000000; font-size: 0.5px'><br>
     <div id='menu_overlay' style='position:absolute;width:100%;height:100%;z-index:10;background: rgba(255,255,255,0.9);visibility:hidden'>{main_menu_html}</div>
     '''.format(**sf)
 
@@ -223,32 +221,32 @@ def start_cgi_page(page_title='untitled'):
 
 def set_status_working():
     pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/animated_working.gif'>\"</script>\n")
+       "/img/header_status_W.png'>\"</script>\n")
 
 
 def set_status_idle():
     pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-        "/img/status_idle.png'>\"</script>\n")
+        "/img/header_status_R.png'>\"</script>\n")
 
 
 def load_logout_button():
     pf("<script>document.getElementById('logout').innerHTML = \"<a onClick='user_logout()'><img src='" +
-       Data.cgiVars['module_file_dir'] + "/img/logout.png'></a>\"</script>\n")
+       Data.cgiVars['module_file_dir'] + "/img/header_logout.png'></a>\"</script>\n")
 
 
 def load_log_button():
     pf("<script>document.getElementById('log').innerHTML = \"<a href='" + Data.cgiVars['cgi_log_file'] +
-       "'><img src='" + Data.cgiVars['module_file_dir'] + "/img/CGI_log.png'></a>\"</script>\n")
+       "'><img src='" + Data.cgiVars['module_file_dir'] + "/img/header_flag.png'></a>\"</script>\n")
 
 
 def load_menu_button():
     pf("<script>document.getElementById('menu').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/menu.png' onClick='show_main_menu()'>\"</script>\n")
+       "/img/header_menu.png' onClick='show_main_menu()'>\"</script>\n")
 
 
 def load_search_button():
     pf("<script>document.getElementById('search').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
-       "/img/search.png'>\"</script>\n")
+       "/img/header_search.png'>\"</script>\n")
 
 
 def load_default_buttons():
