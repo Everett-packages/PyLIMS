@@ -42,14 +42,18 @@ def submit_create_protein_record_request():
 
         data_items_list.append(data_items)
 
+    line_n = 1
     for d in data_items_list:
+        print("Processing data line {0}<br>".format(line_n))
+        line_n += 1
+
         protein_nt_sequence = Seq(d['DNA'], IUPAC.unambiguous_dna)
 
         protein_aa_sequence = ''
         try:
             protein_aa_sequence = protein_nt_sequence.translate()
         except:
-            LimsCGI.cgi_error_message("Error: the provided DNA sequence could not be translated.")
+            LimsCGI.cgi_error_message("The provided DNA sequence could not be translated.")
 
         # remove terminal stop codon(s) from both the provided DNA sequence and the translated DNA sequence
         m = re.search('([\*]+)$', str(protein_aa_sequence))
@@ -60,18 +64,14 @@ def submit_create_protein_record_request():
         # test for internal stop codons
         m = re.search('\*', str(protein_aa_sequence))
         if m:
-            LimsCGI.cgi_error_message("Error. The translated DNA sequence contains an internal stop codon.")
+            LimsCGI.cgi_error_message("The translated DNA sequence contains an internal stop codon.")
 
-        sequence_digest = LimsTools.create_sequence_digest(str(protein_aa_sequence))
+        sql = "insert into protein (protein_id, protein_sequence, sequence_digest) values ('{0}', '{1}', '{2}')" \
+              .format(LimsTools.next_record_id(db, 'protein', 'protein_id'), protein_aa_sequence,
+                      LimsTools.create_sequence_digest(str(protein_aa_sequence)))
 
-        print('|{0}|<br>|{1}|<br><br>'.format(protein_aa_sequence, sequence_digest))
-
-    #sql = "insert into protein (protein_id, protein_sequence, sequence_digest) values ('{0}', '{1}', '{2}')" \
-    #      .format(LimsTools.next_record_id(db, 'protein', 'protein_id'), protein_aa_sequence,
-    #              LimsTools.create_sequence_digest(str(protein_aa_sequence)))
-
-    #print('sql: |{0}|<br>'.format(sql))
-    #db.execute(sql)
+        print('sql: |{0}|<br>'.format(sql))
+        #db.execute(sql)
 
 
 def create_protein_record():
