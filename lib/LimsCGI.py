@@ -218,6 +218,9 @@ def start_cgi_page(page_title='untitled'):
 
         load_default_buttons()
 
+def set_status_error():
+    pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
+       "/img/header_status_E.png'>\"</script>\n")
 
 def set_status_working():
     pf("<script>document.getElementById('status').innerHTML = \"<img src='" + Data.cgiVars['module_file_dir'] +
@@ -256,6 +259,11 @@ def load_default_buttons():
     load_menu_button()
     load_search_button()
 
+def cgi_error_message(message):
+    set_status_error()
+    print("<img style='height:20px;vertical-align:middle' src='" + Data.cgiVars['module_file_dir'] + "/img/x1.png'> \
+    Error<br>{0}".format(message))
+    exit()
 
 def end_cgi_page():
     print('</body></html>')
