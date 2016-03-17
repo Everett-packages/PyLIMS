@@ -26,7 +26,7 @@ def pf(s):
 
 
 def config_data():
-    with open('../../config.xml') as x:
+    with open('../../lib/config.xml') as x:
         xml = x.read()
     config = xmltodict.parse(xml)
     return config
