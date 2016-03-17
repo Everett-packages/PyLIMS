@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<LIMS>
+  <login>
+    <login_persistence>8</login_persistence>
+  </login>
+  <software>
+    <jackhmmer>/usr/local/hmmer-3.1b2/binaries/jackhmmer</jackhmmer>
+  </software>
+  <databases>
+      <UniProtSwprtTremblDistinct></UniProtSwprtTremblDistinct>
+      <UniProtSwprt>/media/sf_vm_share/sequence_databases/swprot</UniProtSwprt>
+  </databases>
+</LIMS>
